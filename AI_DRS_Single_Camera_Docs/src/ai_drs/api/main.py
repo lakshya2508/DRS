@@ -30,7 +30,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import FastAPI, File, HTTPException, UploadFile, Query, WebSocket, WebSocketDisconnect, status
+from ai_drs.api.websocket_manager import ws_manager, BroadcastEvent
+import time
+
 app.include_router(match_router)
+
+
+@app.websocket("/ws/match/{match_id}")
+async def websocket_match_endpoint(websocket: WebSocket, match_id: str):
+    """Real-time WebSocket endpoint streaming live match events to connected clients."""
+    await ws_manager.connect(match_id, websocket)
+    try:
+        while True:
+            # Keep connection alive and receive client heartbeats/messages
+            data_text = await websocket.receive_text()
+            logger.debug(f"Received WebSocket ping from client on Match [{match_id}]: {data_text}")
+    except WebSocketDisconnect:
+        ws_manager.disconnect(match_id, websocket)
+    except Exception as e:
+        ws_manager.disconnect(match_id, websocket)
+
 
 
 # In-memory stores for reviews and calibrations
