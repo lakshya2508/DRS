@@ -1,8 +1,8 @@
 # AI DRS — Project State
 
-**PROJECT:** AI DRS — Single-Camera LBW Review System, Autonomous Match Engine, Multi-Camera 3D Stereo Fusion & Enterprise Cloud  
-**CURRENT VERSION:** 10.1.0  
-**CURRENT MILESTONE:** V10.0 — Enterprise Cloud Multi-Tenancy & Global Match Federation Complete  
+**PROJECT:** AI DRS — Single-Camera LBW Review System, Autonomous Match Engine, Multi-Camera 3D Stereo Fusion & Tactical AI Coach  
+**CURRENT VERSION:** 12.1.0  
+**CURRENT MILESTONE:** V12.0 — Tactical Match AI Coach & Automated Player Insights Complete  
 **SYSTEM STATUS:** 🟢 VERIFIED  
 
 ---
@@ -54,6 +54,12 @@
 │ Tenant & Venue Manager  🟢 VERIFIED   │
 │ Career Passport Engine  🟢 VERIFIED   │
 │ Telemetry Health Monitor🟢 VERIFIED   │
+│ Pitch Physics Model     🟢 VERIFIED   │
+│ Aerodynamic Wind Sim    🟢 VERIFIED   │
+│ Physics Trajectory Tuner🟢 VERIFIED   │
+│ Batter Weakness Detector🟢 VERIFIED   │
+│ Field Setting Recommender🟢 VERIFIED  │
+│ AI Coach REST Router    🟢 VERIFIED   │
 └───────────────────────────────────────┘
 ```
 
@@ -75,28 +81,30 @@
 - [✓] V7.0 Multi-Match Tournament Operations & Leaderboards complete (Modules M29-M31).
 - [✓] V8.0 Hawk-Eye 3D Pitch Graphics & Broadcast Overlays complete (Modules M32-M34).
 - [✓] V9.0 Autonomous Third Umpire & Crease Checker Engine complete (Modules M35-M37).
-- [✓] M38 — Multi-Tenant Organization & Venue Manager (`tenant_manager.py`).
-- [✓] M39 — Global Player Passport & Career Records Engine (`career_passport.py`).
-- [✓] M40 — Enterprise Health & Telemetry Metrics Monitor (`telemetry_monitor.py`).
+- [✓] V10.0 Enterprise Cloud Multi-Tenancy & Global Match Federation complete (Modules M38-M40).
+- [✓] V11.0 Real-Time Pitch Conditions & Aerodynamic Physics Simulator complete (Modules M41-M43).
+- [✓] M44 — Batter Weakness & Pitch Zone Exploit Finder (`weakness_detector.py`).
+- [✓] M45 — Bowler Tactical Field Setting Recommendation Engine (`field_recommender.py`).
+- [✓] M46 — AI Coach Live Match Tactical Briefing REST Router (`coach_router.py`, `/api/v1/coach/briefing`).
 
 ### IN PROGRESS
-- None (V10.0 Complete)
+- None (V12.0 Complete)
 
 ### BLOCKED
 - None
 
 ### METRICS
-- Unit test pass rate: 100% (110/110 passed)
+- Unit test pass rate: 100% (116/116 passed)
 - Code Coverage: 93%
 
 ### KNOWN BUGS / LIMITATIONS
-- System supports single-camera perception, 3D stereo triangulation, deep learning pose estimation, Snicko audio filtering, WebSocket broadcasting, async task queues, highlight reel generation, WebRTC camera streaming, HTML/PDF match reporting, wagon wheel estimation, pitch heatmaps, live win probability, tournament NRR standings, 3D Hawk-Eye wireframe scene generation, TV broadcast decision card overlays, interactive HTML5 WebGL 3D review players, front-foot overstep no-ball detection, voice third umpire callouts, multi-tenant organization API key authentication, global player career passport tracking, and real-time cloud node health telemetry monitoring.
+- System supports single-camera perception, 3D stereo triangulation, deep learning pose estimation, Snicko audio filtering, WebSocket broadcasting, async task queues, highlight reel generation, WebRTC camera streaming, HTML/PDF match reporting, wagon wheel estimation, pitch heatmaps, live win probability, tournament NRR standings, 3D Hawk-Eye wireframe scene generation, TV broadcast decision card overlays, interactive HTML5 WebGL 3D review players, front-foot overstep no-ball detection, voice third umpire callouts, multi-tenant organization API key authentication, global player career passport tracking, cloud node health telemetry monitoring, pitch dampness & friction models, Magnus effect aerodynamics, 3D parabolic physics trajectory tuning, batter weakness analysis, 9-player tactical field positioning recommendations, and live AI Coach REST endpoints.
 
 ### ARCHITECTURE DECISIONS
-- API Key authentication uses `sk_live_...` secrets token mapping; telemetry monitor checks CPU utilization and calibration pixel drift.
+- Tactical Field Setting Recommender generates 9-player field position angles ($\theta$) and distances ($R$) tailored to high-pressure vs containment scenarios.
 
 ### HIGHEST PRIORITY TASK
-- **V10.0 ENTERPRISE CLOUD COMPLETE**: All 40 milestones complete and verified locally.
+- **V12.0 TACTICAL AI COACH COMPLETE**: All 46 milestones complete and verified locally.
 
 ### EXACT NEXT ACTION
-- Await user command to push V10.0 release to GitHub when they say "p".
+- Await user command to push V12.0 release to GitHub when they say "p".

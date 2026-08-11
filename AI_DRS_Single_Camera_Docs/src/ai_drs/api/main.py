@@ -36,9 +36,12 @@ from ai_drs.api.websocket_manager import ws_manager, BroadcastEvent
 import time
 
 from ai_drs.api.tournament_router import tournament_router
+from ai_drs.api.coach_router import coach_router
 
 app.include_router(match_router)
 app.include_router(tournament_router)
+app.include_router(coach_router)
+
 
 
 
