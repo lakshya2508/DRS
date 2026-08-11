@@ -1,0 +1,17 @@
+# Configurable Match Situation Classifier Thresholds Baseline
+situation_thresholds:
+  comfortable:
+    max_required_run_rate: 6.0
+    min_wickets_remaining: 7
+  stable:
+    max_required_run_rate: 9.0
+    min_wickets_remaining: 5
+  pressure:
+    max_required_run_rate: 12.0
+    min_wickets_remaining: 3
+  high_pressure:
+    max_required_run_rate: 16.0
+    min_wickets_remaining: 2
+  critical:
+    max_required_run_rate: 99.0
+    min_wickets_remaining: 0

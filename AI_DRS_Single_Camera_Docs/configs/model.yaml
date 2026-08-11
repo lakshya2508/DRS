@@ -1,0 +1,21 @@
+# Model and Detector Configuration Baseline
+ball_detector:
+  architecture: yolo_baseline
+  weights_path: models/ball_detector_v1.pt
+  confidence_threshold: 0.35
+  nms_iou_threshold: 0.45
+  input_size: 640
+
+ball_tracker:
+  max_missed_frames: 5
+  gating_threshold_px: 50.0
+  min_track_length: 5
+  kalman_process_noise: 1e-2
+  kalman_measurement_noise: 1e-1
+
+stump_detector:
+  confidence_threshold: 0.50
+  weights_path: models/stump_detector_v1.pt
+
+pad_detector:
+  confidence_threshold: 0.50

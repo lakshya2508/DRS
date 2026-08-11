@@ -1,0 +1,17 @@
+# LBW Decision Engine Rule Thresholds Baseline
+thresholds:
+  minimum_track_confidence: 0.70
+  minimum_calibration_confidence: 0.90
+  minimum_decision_confidence: 0.80
+  inconclusive_wicket_probability_low: 0.35
+  inconclusive_wicket_probability_high: 0.65
+
+pitching_rules:
+  outside_leg_is_not_out: true
+  in_line_is_valid: true
+  outside_off_is_valid: true
+
+impact_rules:
+  outside_off_no_shot_offered_valid: true
+  outside_off_shot_offered_not_out: true
+  in_line_is_valid: true

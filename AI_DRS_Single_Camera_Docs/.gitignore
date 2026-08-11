@@ -1,0 +1,30 @@
+# Python Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Coverage
+.cache
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Data & Temp Uploads
+data/raw/
+*.mp4
+*.avi
+*.mov
+
+# Environment
+.env
+venv/
+.venv/
+env/
+
+# System / IDE
+.system_generated/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

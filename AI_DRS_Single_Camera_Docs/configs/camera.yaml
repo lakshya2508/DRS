@@ -1,0 +1,17 @@
+# Camera & Pitch Calibration Config Baseline
+camera:
+  fps: 60
+  expected_width: 1920
+  expected_height: 1080
+  position: behind_bowler
+  fixed_mount: true
+
+pitch_geometry:
+  length_meters: 20.12  # Standard pitch length (stump to stump)
+  width_meters: 3.05    # Pitch width (10 ft)
+  stump_width_meters: 0.2286  # 9 inches
+  stump_height_meters: 0.7112 # 28 inches
+
+homography:
+  max_reprojection_error_pixels: 5.0
+  min_calibration_points: 4

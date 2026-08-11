@@ -1,0 +1,58 @@
+Metadata-Version: 2.4
+Name: ai-drs
+Version: 0.1.0
+Summary: Single-Camera AI-Assisted Cricket LBW Review System
+Author: AI DRS Engineering Team
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Image Processing
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: opencv-python>=4.8.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.22.0
+Requires-Dist: python-multipart>=0.0.6
+Provides-Extra: ml
+Requires-Dist: torch>=2.0.0; extra == "ml"
+Requires-Dist: torchvision>=0.15.0; extra == "ml"
+Requires-Dist: ultralytics>=8.0.0; extra == "ml"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+
+# AI DRS — Single-Camera LBW System
+
+A research-oriented, AI-assisted cricket LBW review system using **one fixed smartphone camera positioned behind the bowler**.
+
+## Documents
+
+- `PRD.md` — product requirements
+- `TRD.md` — technical requirements
+- `EXECUTION_PLAN.md` — implementation roadmap and LOOP execution control
+
+## Core Principle
+
+Build from:
+
+**mobile video → calibration → ball tracking → event detection → trajectory → LBW evidence → decision**
+
+The system supports:
+
+**OUT / NOT OUT / INCONCLUSIVE**
+
+The project does not claim official or professional DRS accuracy.
+
+## Development Start
+
+Follow `EXECUTION_PLAN.md`.
+
+The first milestone is repository/environment setup, followed by video ingestion and camera feasibility testing.
