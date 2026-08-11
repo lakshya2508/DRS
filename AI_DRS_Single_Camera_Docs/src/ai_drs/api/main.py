@@ -9,6 +9,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from ai_drs.api.match_router import router as match_router
+from ai_drs.api.tournament_router import router as tournament_router
 from ai_drs.api.review_service import ReviewPipelineService, ReviewResultResponse
 from ai_drs.calibration.pitch_calibration import CalibrationData, PitchCalibrator
 from ai_drs.common.logging import setup_logger
@@ -34,7 +35,11 @@ from fastapi import FastAPI, File, HTTPException, UploadFile, Query, WebSocket, 
 from ai_drs.api.websocket_manager import ws_manager, BroadcastEvent
 import time
 
+from ai_drs.api.tournament_router import tournament_router
+
 app.include_router(match_router)
+app.include_router(tournament_router)
+
 
 
 @app.websocket("/ws/match/{match_id}")
