@@ -18,9 +18,17 @@ client = TestClient(app)
 def test_read_root():
     response = client.get("/")
     assert response.status_code == 200
+    assert "<!DOCTYPE html>" in response.text
+    assert "cricbuzz" in response.text.lower()
+
+
+def test_read_health():
+    response = client.get("/health")
+    assert response.status_code == 200
     data = response.json()
     assert data["status"] == "online"
-    assert data["version"] == "0.9.0"
+    assert data["version"] == "2.0.0"
+
 
 
 def test_create_calibration_endpoint():
