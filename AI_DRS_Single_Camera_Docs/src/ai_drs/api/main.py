@@ -44,6 +44,7 @@ from ai_drs.api.vr_router import vr_router
 from ai_drs.api.curator_router import curator_router
 from ai_drs.api.ad_router import ad_router
 from ai_drs.api.webhook_router import webhook_router
+from ai_drs.api.llm_router import llm_router
 
 app.include_router(match_router)
 app.include_router(tournament_router)
@@ -55,6 +56,8 @@ app.include_router(vr_router)
 app.include_router(curator_router)
 app.include_router(ad_router)
 app.include_router(webhook_router)
+app.include_router(llm_router)
+
 
 
 
