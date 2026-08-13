@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI DRS — Live Match Operator Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap');
+
+  :root {
+    --bg:        #060a0f;
+    --panel:     #0d1520;
+    --border:    #1a2d44;
+    --accent:    #00c8ff;
+    --green:     #00e676;
+    --red:       #ff1744;
+    --amber:     #ffa726;
+    --text:      #d0e8ff;
+    --sub:       #5a7a9a;
+    --glow-g:    0 0 18px rgba(0,230,118,.45);
+    --glow-r:    0 0 18px rgba(255,23,68,.5);
+    --glow-a:    0 0 18px rgba(255,167,38,.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+         min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOP NAV ────────────────────────────────── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-family:'Orbitron',sans-serif; font-size:1.15rem; color:var(--accent);
+               letter-spacing:.12em; }
+  .badge { padding:4px 14px; border-radius:20px; font-size:.75rem;
+           font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:.08em; }
+  .badge-live  { background:#b71c1c; color:#fff; animation: pulse-red 1.5s infinite; }
+  .badge-idle  { background:#1a2d44; color:var(--sub); }
+  @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  #clock { font-family:'Orbitron',sans-serif; font-size:.85rem; color:var(--sub); }
+
+  /* ── MAIN GRID ──────────────────────────────── */
+  main { flex:1; display:grid;
+         grid-template-columns: 1fr 380px;
+         grid-template-rows: 1fr auto;
+         gap:0; overflow:hidden; }
+
+  /* ── CAMERA FEED ──────────────────────────────── */
+  #feed-panel {
+    position:relative; background:#000;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  #feed-img {
+    max-width:100%; max-height:100%; object-fit:contain;
+    border-right: 1px solid var(--border);
+  }
+  #no-feed {
+    text-align:center; color:var(--sub);
+    font-family:'Orbitron',sans-serif; font-size:.9rem;
+  }
+  #no-feed svg { width:64px; opacity:.3; margin-bottom:16px; }
+
+  /* ── VERDICT OVERLAY ────────────────────────── */
+  #verdict-overlay {
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+    min-width:340px; text-align:center;
+    backdrop-filter:blur(8px);
+    border-radius:12px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.1);
+    transition: all .3s ease;
+    display:none;
+  }
+  #verdict-label {
+    padding:14px 32px;
+    font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900;
+    letter-spacing:.1em; text-shadow: 0 0 30px currentColor;
+  }
+  #verdict-sub {
+    padding:8px 20px;
+    background:rgba(0,0,0,.65);
+    font-size:.85rem; color:#ccc;
+  }
+
+  /* ── RIGHT PANEL ──────────────────────────────── */
+  #right-panel {
+    background:var(--panel);
+    border-left:1px solid var(--border);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+
+  .r-section { padding:18px 20px; border-bottom:1px solid var(--border); }
+  .r-title { font-family:'Rajdhani',sans-serif; font-size:.7rem; font-weight:700;
+              color:var(--sub); letter-spacing:.14em; text-transform:uppercase;
+              margin-bottom:12px; }
+
+  /* ── ZONE INDICATORS ──────────────────────────── */
+  .zones { display:flex; gap:8px; }
+  .zone-card {
+    flex:1; border-radius:8px; padding:10px 8px; text-align:center;
+    background:rgba(255,255,255,.04); border:1px solid var(--border);
+    transition: all .25s ease;
+  }
+  .zone-card.active-green { background:rgba(0,230,118,.15); border-color:#00e676;
+                             box-shadow: var(--glow-g); }
+  .zone-card.active-red   { background:rgba(255,23,68,.12);  border-color:#ff1744;
+                             box-shadow: var(--glow-r); }
+  .zone-card.active-amber { background:rgba(255,167,38,.12); border-color:#ffa726;
+                             box-shadow: var(--glow-a); }
+  .zone-name { font-size:.6rem; color:var(--sub); font-weight:600;
+                letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px; }
+  .zone-value { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; }
+
+  /* ── STATS ──────────────────────────────────── */
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat { background:rgba(255,255,255,.03); border:1px solid var(--border);
+           border-radius:8px; padding:12px 14px; }
+  .stat-label { font-size:.6rem; color:var(--sub); text-transform:uppercase;
+                 letter-spacing:.1em; margin-bottom:4px; }
+  .stat-value { font-family:'Orbitron',sans-serif; font-size:1.3rem; color:var(--accent); }
+
+  /* ── VOICE CALLOUT ──────────────────────────── */
+  #voice-box {
+    background:rgba(0,200,255,.06); border:1px solid rgba(0,200,255,.2);
+    border-radius:8px; padding:12px 14px; min-height:56px;
+    font-size:.85rem; line-height:1.5; color:#a0d8ef;
+    font-style:italic;
+  }
+
+  /* ── DRS LOG ──────────────────────────────────── */
+  #drs-log { flex:1; overflow-y:auto; padding:0; }
+  .log-entry { padding:10px 20px; border-bottom:1px solid var(--border);
+                display:flex; align-items:center; gap:12px; font-size:.8rem; }
+  .log-entry:hover { background:rgba(255,255,255,.03); }
+  .log-badge { border-radius:4px; padding:3px 9px;
+                font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.75rem; }
+  .log-out   { background:#b71c1c; color:#fff; }
+  .log-not   { background:#1b5e20; color:#fff; }
+  .log-inc   { background:#e65100; color:#fff; }
+  .log-track { background:#1a2d44; color:var(--sub); }
+  .log-meta  { color:var(--sub); font-size:.72rem; }
+
+  /* ── CONTROLS ──────────────────────────────────── */
+  #controls { padding:16px 20px; border-top:1px solid var(--border);
+               display:flex; flex-wrap:wrap; gap:8px; }
+  button { cursor:pointer; border:none; border-radius:7px; padding:9px 16px;
+           font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.88rem;
+           letter-spacing:.06em; transition: all .2s; }
+  #btn-start { background:#00c8ff; color:#000; }
+  #btn-start:hover { background:#33d4ff; box-shadow:0 0 14px rgba(0,200,255,.4); }
+  #btn-stop  { background:#ff1744; color:#fff; }
+  #btn-stop:hover  { background:#ff4569; }
+  #btn-reset { background:rgba(255,255,255,.08); color:var(--text); }
+  #btn-reset:hover { background:rgba(255,255,255,.14); }
+  #btn-webcam{ background:rgba(0,230,118,.15); color:#00e676;
+               border:1px solid #00e676; }
+
+  select { background:var(--panel); color:var(--text); border:1px solid var(--border);
+            border-radius:7px; padding:8px 10px; font-family:'Inter',sans-serif;
+            font-size:.82rem; }
+
+  /* ── BOTTOM BAR ──────────────────────────────── */
+  footer {
+    grid-column:1/-1;
+    display:flex; align-items:center; gap:24px;
+    padding:8px 20px;
+    background:var(--panel); border-top:1px solid var(--border);
+    font-size:.75rem; color:var(--sub);
+  }
+  #ws-status { display:flex; align-items:center; gap:6px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#555; }
+  .dot.green { background:#00e676; box-shadow:0 0 6px #00e676; }
+  #frame-counter { margin-left:auto; font-family:'Orbitron',sans-serif; font-size:.7rem; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <h1>&#9651; AI DRS — LIVE MATCH</h1>
+  <span id="live-badge" class="badge badge-idle">&#11044; IDLE</span>
+  <span id="clock">--:--:--</span>
+</header>
+
+<main>
+
+  <!-- ── CAMERA FEED ── -->
+  <div id="feed-panel">
+    <div id="no-feed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5">
+        <rect x="2" y="6" width="20" height="14" rx="2"/><path d="M22 10l-4 2 4 2"/>
+      </svg>
+      <p>Start pipeline to see live feed</p>
+    </div>
+    <img id="feed-img" alt="Live feed" style="display:none"/>
+    <div id="verdict-overlay">
+      <div id="verdict-label">TRACKING</div>
+      <div id="verdict-sub">Waiting for delivery...</div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div id="right-panel">
+
+    <!-- Zone indicators -->
+    <div class="r-section">
+      <div class="r-title">ICC LBW 3-Zone Analysis</div>
+      <div class="zones">
+        <div class="zone-card" id="z-pitch">
+          <div class="zone-name">Pitching</div>
+          <div class="zone-value" id="z-pitch-val">—</div>
+        </div>
+        <div class="zone-card" id="z-impact">
+          <div class="zone-name">Impact</div>
+          <div class="zone-value" id="z-impact-val">—</div>
+        </div>
+        <div class="zone-card" id="z-wicket">
+          <div class="zone-name">Wickets</div>
+          <div class="zone-value" id="z-wicket-val">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="r-section">
+      <div class="r-title">Ball Metrics</div>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-label">Speed</div>
+          <div class="stat-value" id="stat-speed">0 <span style="font-size:.7rem;color:var(--sub)">km/h</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Confidence</div>
+          <div class="stat-value" id="stat-conf">0<span style="font-size:.7rem;color:var(--sub)">%</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Frame</div>
+          <div class="stat-value" id="stat-frame" style="font-size:.9rem">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Traj Pts</div>
+          <div class="stat-value" id="stat-traj">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voice callout -->
+    <div class="r-section">
+      <div class="r-title">Third Umpire Voice</div>
+      <div id="voice-box">Waiting for delivery...</div>
+    </div>
+
+    <!-- DRS log -->
+    <div class="r-title" style="padding:14px 20px 6px; color:var(--sub); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;">Decision Log</div>
+    <div id="drs-log"></div>
+
+    <!-- Controls -->
+    <div id="controls">
+      <select id="src-select">
+        <option value="SYNTHETIC">Synthetic (Test)</option>
+        <option value="WEBCAM">Webcam (USB)</option>
+        <option value="VIDEO">Video File</option>
+        <option value="RTSP">RTSP Stream</option>
+      </select>
+      <button id="btn-start" onclick="startPipeline()">&#9654; START</button>
+      <button id="btn-stop"  onclick="stopPipeline()">&#9646;&#9646; STOP</button>
+      <button id="btn-reset" onclick="resetDelivery()">&#8635; RESET DELIVERY</button>
+    </div>
+  </div>
+</main>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div id="ws-status"><div class="dot" id="ws-dot"></div><span id="ws-label">Disconnected</span></div>
+  <span id="pipeline-status">Pipeline: IDLE</span>
+  <span id="frame-counter">Frame 0</span>
+</footer>
+
+<script>
+const API = '';   // same origin
+let ws = null;
+let frameCount = 0;
+let logEntries = [];
+
+// ── Clock ──────────────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 500);
+
+// ── WebSocket connection ───────────────────────────────────────────────────
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/live`);
+
+  ws.onopen = () => {
+    document.getElementById('ws-dot').className = 'dot green';
+    document.getElementById('ws-label').textContent = 'Connected';
+  };
+
+  ws.onmessage = (evt) => {
+    const d = JSON.parse(evt.data);
+    if (d.type === 'connected') return;
+    updateDashboard(d);
+  };
+
+  ws.onclose = () => {
+    document.getElementById('ws-dot').className = 'dot';
+    document.getElementById('ws-label').textContent = 'Disconnected — reconnecting...';
+    setTimeout(connectWS, 2500);
+  };
+}
+
+// ── Dashboard update ───────────────────────────────────────────────────────
+function updateDashboard(d) {
+  frameCount++;
+
+  // Camera frame
+  if (d.frame_b64) {
+    const img = document.getElementById('feed-img');
+    const noFeed = document.getElementById('no-feed');
+    img.src = 'data:image/jpeg;base64,' + d.frame_b64;
+    img.style.display = 'block';
+    noFeed.style.display = 'none';
+  }
+
+  // Verdict overlay
+  const overlay = document.getElementById('verdict-overlay');
+  const label   = document.getElementById('verdict-label');
+  const sub     = document.getElementById('verdict-sub');
+  overlay.style.display = 'block';
+
+  const colors = {
+    OUT:          { bg:'rgba(183,28,28,.85)',  color:'#ff6b6b', shadow:'#ff1744' },
+    NOT_OUT:      { bg:'rgba(27,94,32,.85)',   color:'#69f0ae', shadow:'#00e676' },
+    INCONCLUSIVE: { bg:'rgba(230,81,0,.85)',   color:'#ffb74d', shadow:'#ffa726' },
+    TRACKING:     { bg:'rgba(10,20,35,.75)',   color:'#90caf9', shadow:'#42a5f5' },
+  };
+  const c = colors[d.verdict] || colors.TRACKING;
+  label.style.background = c.bg;
+  label.style.color      = c.color;
+  label.style.textShadow = `0 0 30px ${c.shadow}`;
+  label.textContent      = d.verdict.replace('_', ' ');
+  sub.textContent        = d.voice_callout;
+
+  // Zones
+  setZone('z-pitch',  'z-pitch-val',  d.pitching_zone);
+  setZone('z-impact', 'z-impact-val', d.impact_zone);
+  setZone('z-wicket', 'z-wicket-val', d.wicket_zone);
+
+  // Stats
+  document.getElementById('stat-speed').innerHTML = `${d.ball_speed_kmh} <span style="font-size:.7rem;color:var(--sub)">km/h</span>`;
+  document.getElementById('stat-conf').innerHTML  = `${d.confidence_pct}<span style="font-size:.7rem;color:var(--sub)">%</span>`;
+  document.getElementById('stat-frame').textContent = d.frame_id;
+  document.getElementById('stat-traj').textContent  = d.trajectory ? d.trajectory.length : 0;
+  document.getElementById('frame-counter').textContent = `Frame ${d.frame_id}`;
+
+  // Voice
+  document.getElementById('voice-box').textContent = d.voice_callout;
+
+  // Log (only non-tracking verdicts)
+  if (d.verdict !== 'TRACKING') {
+    addLogEntry(d);
+  }
+}
+
+function setZone(cardId, valId, value) {
+  const card = document.getElementById(cardId);
+  const val  = document.getElementById(valId);
+  const text = (value || '—').replace(/_/g, ' ');
+  val.textContent = text;
+  card.className  = 'zone-card';
+  if (['IN_LINE','HITTING'].includes(value))       card.classList.add('active-red');
+  else if (value === 'UMPIRES_CALL')                card.classList.add('active-amber');
+  else if (['OUTSIDE_OFF','OUTSIDE_LEG','MISSING'].includes(value)) card.classList.add('active-green');
+}
+
+function addLogEntry(d) {
+  const log    = document.getElementById('drs-log');
+  const cls    = { OUT:'log-out', NOT_OUT:'log-not', INCONCLUSIVE:'log-inc', TRACKING:'log-track' }[d.verdict] || 'log-track';
+  const ts     = new Date(d.timestamp * 1000).toLocaleTimeString();
+  const entry  = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `
+    <span class="log-badge ${cls}">${d.verdict.replace('_',' ')}</span>
+    <div>
+      <div style="color:var(--text)">${d.confidence_pct}% conf · ${d.ball_speed_kmh} km/h</div>
+      <div class="log-meta">${ts} · Frame ${d.frame_id}</div>
+    </div>`;
+  log.prepend(entry);
+  if (log.children.length > 40) log.removeChild(log.lastChild);
+}
+
+// ── Pipeline controls ──────────────────────────────────────────────────────
+async function startPipeline() {
+  const src = document.getElementById('src-select').value;
+  const r = await fetch(`${API}/pipeline/start?source=${src}&source_path=0`, { method:'POST' });
+  const d = await r.json();
+  document.getElementById('pipeline-status').textContent = `Pipeline: ${d.status.toUpperCase()}`;
+  document.getElementById('live-badge').className = 'badge badge-live';
+  document.getElementById('live-badge').textContent = '● LIVE';
+}
+
+async function stopPipeline() {
+  await fetch(`${API}/pipeline/stop`, { method:'POST' });
+  document.getElementById('pipeline-status').textContent = 'Pipeline: STOPPED';
+  document.getElementById('live-badge').className = 'badge badge-idle';
+  document.getElementById('live-badge').textContent = '● IDLE';
+}
+
+async function resetDelivery() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send('reset');
+  } else {
+    await fetch(`${API}/pipeline/reset_delivery`, { method:'POST' });
+  }
+}
+
+// Boot
+connectWS();
+</script>
+</body>
+</html>

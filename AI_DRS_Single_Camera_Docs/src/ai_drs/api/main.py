@@ -48,10 +48,12 @@ from ai_drs.api.llm_router import llm_router
 from ai_drs.api.minimal_api import minimal_drs_router
 from ai_drs.api.real_model_router import real_model_router
 from ai_drs.api.live_match_router import live_match_router
+from ai_drs.api.live_pipeline_router import live_pipeline_router
 
 app.include_router(minimal_drs_router)
 app.include_router(real_model_router)
 app.include_router(live_match_router)
+app.include_router(live_pipeline_router)
 app.include_router(match_router)
 app.include_router(tournament_router)
 app.include_router(coach_router)
@@ -65,8 +67,16 @@ app.include_router(webhook_router)
 app.include_router(llm_router)
 
 
+from fastapi.responses import HTMLResponse
+
+@app.get("/live", response_class=HTMLResponse, tags=["Live Dashboard"])
+def live_dashboard():
+    """Serves the full-screen AI DRS Live Operator Dashboard UI."""
+    dashboard_path = Path(__file__).parent.parent / "static" / "live_dashboard.html"
+    return HTMLResponse(content=dashboard_path.read_text(encoding="utf-8"))
 
 
+@app.websocket("/ws/match/{match_id}")
 
 
 
