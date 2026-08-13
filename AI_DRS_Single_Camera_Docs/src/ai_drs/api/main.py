@@ -37,10 +37,31 @@ import time
 
 from ai_drs.api.tournament_router import tournament_router
 from ai_drs.api.coach_router import coach_router
+from ai_drs.api.press_router import press_router
+from ai_drs.api.sandbox_router import sandbox_router
+from ai_drs.api.reel_router import reel_router
+from ai_drs.api.vr_router import vr_router
+from ai_drs.api.curator_router import curator_router
+from ai_drs.api.ad_router import ad_router
+from ai_drs.api.webhook_router import webhook_router
 
 app.include_router(match_router)
 app.include_router(tournament_router)
 app.include_router(coach_router)
+app.include_router(press_router)
+app.include_router(sandbox_router)
+app.include_router(reel_router)
+app.include_router(vr_router)
+app.include_router(curator_router)
+app.include_router(ad_router)
+app.include_router(webhook_router)
+
+
+
+
+
+
+
 
 
 
