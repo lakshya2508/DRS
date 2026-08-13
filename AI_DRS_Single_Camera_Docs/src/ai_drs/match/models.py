@@ -3,15 +3,26 @@ Authoritative Match State and Intelligence Data Models for AI DRS
 """
 
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
+
 
 
 class TossState(BaseModel):
     """Schema representing toss outcome and innings setup."""
-    toss_winner: str
-    toss_choice: str = Field(description="'BAT' or 'BOWL'")
-    batting_team: str
-    bowling_team: str
+    toss_winner: str = Field(default="Team A", validation_alias=AliasChoices("toss_winner", "winner_team"))
+    toss_choice: str = Field(default="BAT", description="'BAT' or 'BOWL'")
+    batting_team: str = Field(default="Team A")
+    bowling_team: str = Field(default="Team B")
+
+    @property
+    def winner_team(self) -> str:
+        return self.toss_winner
+
+    @property
+    def decision(self) -> str:
+        return self.toss_choice
+
+
 
 
 class BatsmanStats(BaseModel):
@@ -84,54 +95,100 @@ class PartnershipStats(BaseModel):
     balls: int = Field(default=0, ge=0)
 
 
+from pydantic import AliasChoices, BaseModel, Field
+
+
 class DeliveryEvent(BaseModel):
     """Validated delivery event input that updates MatchState."""
-    delivery_id: str
-    over_number: int = Field(ge=0)
-    ball_number_in_over: int = Field(ge=1, le=6)
-    striker_name: str
-    non_striker_name: str
-    bowler_name: str
-    runs_off_bat: int = Field(default=0, ge=0)
+    delivery_id: str = Field(default="DEL_01")
+    over_number: int = Field(default=0, ge=0)
+    ball_number_in_over: int = Field(
+        default=1, ge=1, le=6, validation_alias=AliasChoices("ball_number_in_over", "ball_number")
+    )
+    striker_name: str = Field(default="Batter A")
+    non_striker_name: str = Field(default="Batter B")
+    bowler_name: str = Field(default="Bowler A")
+    runs_off_bat: int = Field(
+        default=0, ge=0, validation_alias=AliasChoices("runs_off_bat", "runs_batter")
+    )
+
     wide_runs: int = Field(default=0, ge=0)
     noball_runs: int = Field(default=0, ge=0)
     bye_runs: int = Field(default=0, ge=0)
     legbye_runs: int = Field(default=0, ge=0)
     is_wicket: bool = Field(default=False)
-    wicket_type: Optional[str] = Field(default=None, description="'BOWLED', 'LBW', 'CAUGHT', 'RUN_OUT', 'STUMPED'")
+    wicket_type: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("wicket_type", "dismissal_type")
+    )
     dismissed_player: Optional[str] = Field(default=None)
     new_batsman_name: Optional[str] = Field(default=None)
     ball_speed_kmh: Optional[float] = Field(default=None)
     review_result: Optional[str] = Field(default=None)
+    drs_review_requested: bool = Field(default=False)
+
+
+    @property
+    def ball_number(self) -> int:
+        return self.ball_number_in_over
+
+    @property
+    def runs_batter(self) -> int:
+        return self.runs_off_bat
+
+    @property
+    def dismissal_type(self) -> Optional[str]:
+        return self.wicket_type
+
 
 
 class MatchState(BaseModel):
     """Authoritative MatchState schema driving the entire platform."""
-    match_id: str
-    team_a: str
-    team_b: str
+    match_id: str = Field(default="M_01")
+    team_a: str = Field(default="Team A")
+    team_b: str = Field(default="Team B")
     total_overs: int = Field(default=20, ge=1)
     innings: int = Field(default=1, ge=1, le=2)
-    batting_team: str
-    bowling_team: str
-    score: int = Field(default=0, ge=0)
+    batting_team: str = Field(default="Team A")
+    bowling_team: str = Field(default="Team B")
+    score: int = Field(default=0, ge=0, validation_alias=AliasChoices("score", "runs"))
     wickets: int = Field(default=0, ge=0, le=10)
-    total_legal_balls: int = Field(default=0, ge=0)
-    target: Optional[int] = Field(default=None)
-    striker: BatsmanStats
-    non_striker: BatsmanStats
-    bowler: BowlerStats
+    total_legal_balls: int = Field(default=0, ge=0, validation_alias=AliasChoices("total_legal_balls", "legal_balls"))
+    target: Optional[int] = Field(default=None, validation_alias=AliasChoices("target", "target_runs"))
+    striker: BatsmanStats = Field(default_factory=lambda: BatsmanStats(name="Batter A"))
+    non_striker: BatsmanStats = Field(default_factory=lambda: BatsmanStats(name="Batter B"))
+    bowler: BowlerStats = Field(default_factory=lambda: BowlerStats(name="Bowler A"))
     current_over_runs: int = Field(default=0, ge=0)
     current_over_deliveries: List[str] = Field(default_factory=list)
-    partnership: PartnershipStats
+    partnership: PartnershipStats = Field(default_factory=lambda: PartnershipStats(batsman_1="Batter A", batsman_2="Batter B"))
     current_run_rate: float = Field(default=0.0, ge=0.0)
     required_run_rate: Optional[float] = Field(default=None)
     runs_required: Optional[int] = Field(default=None)
-    balls_remaining: int = Field(ge=0)
+    balls_remaining: int = Field(default=120, ge=0)
     wickets_remaining: int = Field(default=10, ge=0, le=10)
     toss: Optional[TossState] = Field(default=None)
     match_status: str = Field(default="IN_PROGRESS", description="'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'SUPER_OVER'")
     result_summary: Optional[str] = Field(default=None)
+
+    @property
+    def is_target_set(self) -> bool:
+        return self.target is not None
+
+    @property
+    def target_runs(self) -> Optional[int]:
+        return self.target
+
+    @property
+    def legal_balls(self) -> int:
+
+        return self.total_legal_balls % 6
+
+    @property
+    def runs(self) -> int:
+        return self.score
+
+    @property
+    def overs(self) -> float:
+        return self.overs_formatted
 
     @property
     def overs_formatted(self) -> float:
@@ -139,3 +196,5 @@ class MatchState(BaseModel):
         overs = self.total_legal_balls // 6
         balls = self.total_legal_balls % 6
         return float(f"{overs}.{balls}")
+
+

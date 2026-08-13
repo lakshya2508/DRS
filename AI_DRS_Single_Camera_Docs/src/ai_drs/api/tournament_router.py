@@ -13,6 +13,8 @@ from ai_drs.tournament.tournament_engine import TournamentEngine, TournamentStan
 logger = setup_logger("ai_drs.api.tournament")
 
 tournament_router = APIRouter(prefix="/api/v1/tournament", tags=["Tournament Engine"])
+router = tournament_router
+
 
 # In-memory tournament engines
 tournaments_db: Dict[str, TournamentEngine] = {}

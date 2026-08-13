@@ -5,7 +5,7 @@ Unit tests for Automated Match Report HTML/PDF Exporter Module
 import pytest
 
 from ai_drs.evaluation.pdf_exporter import MatchReportCard, MatchReportExporter
-from ai_drs.match.models import MatchState, TossDecision, TossOption, TossState
+from ai_drs.match.models import MatchState, TossState
 
 
 def test_match_report_exporter():
@@ -20,11 +20,12 @@ def test_match_report_exporter():
     )
 
     toss_state = TossState(
-        coin_flip_result=TossOption.HEADS,
-        winner_team="India",
-        decision=TossDecision.BAT,
-        is_completed=True
+        toss_winner="India",
+        toss_choice="BAT",
+        batting_team="India",
+        bowling_team="Australia"
     )
+
 
     card = MatchReportExporter.generate_html_report(match_state, toss_state)
 

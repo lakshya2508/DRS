@@ -2,7 +2,7 @@
 Tournament Leaderboards & Player Honors Module (Orange Cap & Purple Cap)
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from ai_drs.common.logging import setup_logger

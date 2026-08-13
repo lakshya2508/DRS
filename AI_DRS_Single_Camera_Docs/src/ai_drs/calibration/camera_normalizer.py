@@ -2,6 +2,7 @@
 Camera White Balance & Auto-Exposure Normalization Engine
 """
 
+from typing import Tuple
 import cv2
 import numpy as np
 from pydantic import BaseModel, Field

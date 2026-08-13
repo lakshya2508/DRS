@@ -65,7 +65,8 @@ class AsyncVideoProcessor:
             self.tasks[task_id].status = "COMPLETED"
             self.tasks[task_id].progress_pct = 100.0
             self.tasks[task_id].result = review_res.model_dump()
-            logger.info(f"Completed async video processing job [{task_id}]: decision={review_res.decision}")
+            logger.info(f"Completed async video processing job [{task_id}]: result={review_res.result}")
+
 
         except Exception as e:
             logger.error(f"Error in async video processing job [{task_id}]: {e}")

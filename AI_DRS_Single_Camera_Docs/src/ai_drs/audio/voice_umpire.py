@@ -25,11 +25,13 @@ class VoiceUmpireAssistant:
     @staticmethod
     def generate_drs_voice_callout(review: ReviewResultResponse) -> VoiceUmpireCallout:
         """Generates TV third umpire step-by-step audio commentary transcript."""
-        ev = review.evidence
+        p_zone = review.pitching.get("zone", "in_line")
+        i_zone = review.impact.get("zone", "in_line")
+        w_status = review.wicket.get("status", "hitting")
 
-        p_str = f"Pitching {ev.pitching_zone.value.replace('_', ' ').lower()}"
-        i_str = f"Impact {ev.impact_zone.value.replace('_', ' ').lower()}"
-        w_str = f"Wickets {ev.hit_stumps_status.value.lower()}"
+        p_str = f"Pitching {p_zone.replace('_', ' ').lower()}"
+        i_str = f"Impact {i_zone.replace('_', ' ').lower()}"
+        w_str = f"Wickets {w_status.lower()}"
 
         steps = [
             "We are ready for the decision review.",
@@ -38,9 +40,9 @@ class VoiceUmpireAssistant:
             f"Checking wickets projection... {w_str.capitalize()}."
         ]
 
-        if review.decision.value == "OUT":
+        if review.result == "OUT":
             cmd = "Please stay with your on-field decision OUT. Signal OUT now."
-        elif review.decision.value == "NOT OUT":
+        elif review.result == "NOT OUT":
             cmd = "I recommend reversing your decision to NOT OUT. Signal NOT OUT now."
         else:
             cmd = "Evidence is INCONCLUSIVE due to low tracking confidence. Stay with on-field decision."
@@ -56,3 +58,4 @@ class VoiceUmpireAssistant:
             spoken_steps=steps,
             final_voice_command=cmd
         )
+

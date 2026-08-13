@@ -2,6 +2,7 @@
 DLS 4.0 Revised Target Score Recalculator for Rain Interrupted Matches
 """
 
+import math
 from pydantic import BaseModel, Field
 
 from ai_drs.common.logging import setup_logger

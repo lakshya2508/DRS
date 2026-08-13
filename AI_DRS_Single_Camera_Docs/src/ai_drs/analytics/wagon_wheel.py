@@ -53,10 +53,11 @@ class WagonWheelEngine:
             return ShotZone.THIRD_MAN
         elif 225.0 <= deg < 270.0:
             return ShotZone.POINT
-        elif 270.0 <= deg < 315.0:
+        elif 270.0 <= deg <= 315.0:
             return ShotZone.COVER
         else:
             return ShotZone.LONG_OFF
+
 
     def compute_shot(
         self,

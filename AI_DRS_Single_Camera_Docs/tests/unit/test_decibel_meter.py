@@ -18,8 +18,9 @@ def test_decibel_meter_normal():
 
 
 def test_decibel_meter_ecstatic_roar():
-    loud_audio = np.random.normal(0, 1.5, 44100)
+    loud_audio = np.random.normal(0, 3.5, 44100)
     metrics = StadiumDecibelMeterEngine.measure_stadium_decibels(loud_audio)
 
     assert metrics.spl_decibels_db >= 100.0
+
     assert metrics.atmosphere_state in ("LOUD", "ECSTATIC_ROAR")

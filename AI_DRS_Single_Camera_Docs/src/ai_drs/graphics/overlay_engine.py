@@ -28,12 +28,17 @@ class BroadcastOverlayEngine:
     @staticmethod
     def render_drs_decision_card(review: ReviewResultResponse) -> BroadcastDRSOverlayCard:
         """Renders TV decision card badges and SVG graphic overlay XML."""
-        p_badge = f"PITCHING: {review.evidence.pitching_zone.value.upper()}"
-        i_badge = f"IMPACT: {review.evidence.impact_zone.value.upper()}"
-        w_badge = f"WICKETS: {review.evidence.hit_stumps_status.value.upper()}"
-        final_badge = review.decision.value.upper()
+        p_zone = review.pitching.get("zone", "in_line").upper()
+        i_zone = review.impact.get("zone", "in_line").upper()
+        w_status = review.wicket.get("status", "hitting").upper()
+
+        p_badge = f"PITCHING: {p_zone}"
+        i_badge = f"IMPACT: {i_zone}"
+        w_badge = f"WICKETS: {w_status}"
+        final_badge = review.result.upper()
 
         status_color = "#00E676" if final_badge == "OUT" else ("#FF1744" if final_badge == "NOT OUT" else "#FFEA00")
+
 
         svg_xml = f"""<svg xmlns="http://www.w3.org/2000/svg" width="600" height="350" viewBox="0 0 600 350">
   <rect width="600" height="350" rx="12" fill="#0A0A0C" stroke="#2A2A32" stroke-width="2"/>

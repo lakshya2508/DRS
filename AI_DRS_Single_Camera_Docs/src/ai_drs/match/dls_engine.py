@@ -22,6 +22,7 @@ class DLSEngine:
 
     # Lambda exponential decay constants per wickets lost w (0..9)
     LAMBDA_DECAY = [0.0367, 0.0369, 0.0374, 0.0385, 0.0402, 0.0428, 0.0468, 0.0531, 0.0638, 0.0864]
+    R0_SCALE = [100.0, 93.4, 85.1, 74.9, 62.7, 49.0, 34.6, 20.5, 9.8, 3.1]
 
     @classmethod
     def get_resource_percentage(cls, overs_remaining: float, wickets_lost: int) -> float:
@@ -33,11 +34,12 @@ class DLSEngine:
 
         w_idx = min(9, max(0, wickets_lost))
         lam = cls.LAMBDA_DECAY[w_idx]
+        r0 = cls.R0_SCALE[w_idx]
 
-        # R(u, w) = R_0 * (1 - exp(-lambda * u))
-        # Standardized R_0 scale where 50 overs, 0 wickets = 100%
-        r_pct = 100.0 * (1.0 - math.exp(-lam * overs_remaining)) / (1.0 - math.exp(-cls.LAMBDA_DECAY[0] * 50.0))
+        # R(u, w) = R_0(w) * (1 - exp(-lambda * u)) / (1 - exp(-lambda_0 * 50))
+        r_pct = r0 * (1.0 - math.exp(-lam * overs_remaining)) / (1.0 - math.exp(-cls.LAMBDA_DECAY[0] * 50.0))
         r_pct = min(100.0, max(0.0, r_pct))
 
         logger.debug(f"DLS Resource R({overs_remaining:.1f} ov, {wickets_lost} wkts) = {r_pct:.1f}%")
         return round(r_pct, 1)
+

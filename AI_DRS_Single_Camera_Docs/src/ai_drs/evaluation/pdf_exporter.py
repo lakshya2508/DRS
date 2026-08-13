@@ -31,10 +31,12 @@ class MatchReportExporter:
         toss_state: Optional[TossState] = None
     ) -> MatchReportCard:
         """Generates responsive HTML match report document."""
+        dec_str = toss_state.decision.value if hasattr(toss_state.decision, "value") else str(toss_state.decision)
         toss_desc = (
-            f"{toss_state.winner_team} won the toss and elected to {toss_state.decision.value.lower()}"
+            f"{toss_state.winner_team} won the toss and elected to {dec_str.lower()}"
             if toss_state and toss_state.decision else "Toss pending"
         )
+
         score_desc = f"{match_state.team_b}: {match_state.runs}/{match_state.wickets} in {match_state.overs}.{match_state.legal_balls} overs"
 
         html = f"""<!DOCTYPE html>
@@ -65,7 +67,8 @@ class MatchReportExporter:
             match_id=match_state.match_id,
             team_a=match_state.team_a,
             team_b=match_state.team_b,
-            winner_team=match_state.winner_team,
+            winner_team=getattr(match_state, "winner_team", match_state.team_a),
+
             toss_summary=toss_desc,
             scorecard_summary=score_desc,
             html_content=html

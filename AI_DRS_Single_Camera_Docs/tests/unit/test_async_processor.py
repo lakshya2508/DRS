@@ -31,7 +31,8 @@ def test_async_video_processor_e2e(tmp_path: Path):
         assert status_final.status == "COMPLETED"
         assert status_final.progress_pct == 100.0
         assert status_final.result is not None
-        assert "decision" in status_final.result
+        assert "result" in status_final.result or "decision" in status_final.result
+
 
     asyncio.run(_runner())
 

@@ -41,7 +41,28 @@ class Frame(BaseModel):
 class VideoIngestor:
     """Handles video file ingestion, metadata extraction, validation, and frame extraction."""
 
+    @staticmethod
+    def create_synthetic_delivery_video(
+        output_path: str,
+        width: int = 1280,
+        height: int = 720,
+        num_frames: int = 60,
+        fps: float = 30.0
+    ) -> str:
+        """Creates a synthetic mp4 video file for testing."""
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        for i in range(num_frames):
+            img = np.zeros((height, width, 3), dtype=np.uint8)
+            cx = int(100 + i * (width - 200) / max(1, num_frames))
+            cy = int(height / 2)
+            cv2.circle(img, (cx, cy), 15, (0, 234, 255), -1)
+            writer.write(img)
+        writer.release()
+        return output_path
+
     def __init__(self, min_fps: float = 24.0, min_width: int = 640, min_height: int = 480):
+
         self.min_fps = min_fps
         self.min_width = min_width
         self.min_height = min_height

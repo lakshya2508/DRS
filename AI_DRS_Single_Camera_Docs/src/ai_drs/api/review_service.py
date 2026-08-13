@@ -33,6 +33,16 @@ class ReviewResultResponse(BaseModel):
     calibration: Dict[str, Any]
     pipeline_version: str = Field(default="0.9.0")
 
+    @property
+    def decision(self) -> str:
+        return self.result
+
+    @property
+    def confidence_score(self) -> float:
+        return self.confidence
+
+
+
 
 class ReviewPipelineService:
     """Orchestrates end-to-end execution of all AI DRS computer vision & decision modules."""
@@ -63,12 +73,22 @@ class ReviewPipelineService:
         calibrator = PitchCalibrator()
         return calibrator.calibrate(image_pts, pitch_pts, image_size=(width, height), camera_id="default_synthetic")
 
+    def process_review(
+        self,
+        video_path: Union[str, Path],
+        calibration: Optional[CalibrationData] = None,
+        batter_stance: str = "RHB"
+    ) -> ReviewResultResponse:
+        """Alias for process_video."""
+        return self.process_video(video_path, calibration=calibration, batter_stance=batter_stance)
+
     def process_video(
         self,
         video_path: Union[str, Path],
         calibration: Optional[CalibrationData] = None,
         batter_stance: str = "RHB"
     ) -> ReviewResultResponse:
+
         """Runs the complete E2E AI DRS pipeline on a delivery video."""
         review_id = f"REV-{uuid.uuid4().hex[:8].upper()}"
         path = Path(video_path).resolve()
