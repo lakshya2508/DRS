@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, Optional
 from fastapi import FastAPI, File, HTTPException, UploadFile, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from ai_drs.api.match_router import router as match_router
 from ai_drs.api.tournament_router import router as tournament_router
@@ -21,6 +22,9 @@ app = FastAPI(
     description="REST API for single-camera cricket LBW review and autonomous match state engine",
     version="1.7.0"
 )
+
+static_dir = Path(__file__).parent.parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # Enable CORS for Next.js frontend integration
 app.add_middleware(
