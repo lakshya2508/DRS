@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI DRS — Professional Cricket Analytics Platform</title>
+<meta name="description" content="AI-powered cricket analytics for every player. Ball tracking, pitch maps, wagon wheels, DRS decisions — all from a single camera."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET & BASE ───────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#06090f;
+  --panel:#0b1120;
+  --panel2:#0f1929;
+  --border:rgba(255,255,255,.07);
+  --accent:#00e5a0;
+  --accent2:#0099ff;
+  --accent3:#ff6b35;
+  --text:#e8f4ff;
+  --sub:#6b8aab;
+  --white:#fff;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;line-height:1.6;}
+
+/* ── NAVBAR ─────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;height:70px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,9,15,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.logo{font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--accent);letter-spacing:.1em;text-decoration:none;}
+.logo span{color:var(--text);}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{color:var(--sub);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{display:flex;gap:12px;align-items:center;}
+.btn{padding:10px 22px;border-radius:7px;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .2s;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:8px;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#00ffb8;box-shadow:0 0 30px rgba(0,229,160,.35);}
+.btn-large{padding:14px 32px;font-size:1rem;border-radius:10px;}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;}
+.hamburger span{width:24px;height:2px;background:var(--text);border-radius:2px;transition:all .3s;}
+
+/* ── HERO ───────────────────────────────────────── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 5% 80px;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 40%,rgba(0,229,160,.08) 0%,transparent 70%),radial-gradient(ellipse 60% 40% at 80% 60%,rgba(0,153,255,.06) 0%,transparent 60%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);border-radius:50px;padding:6px 16px;font-size:.78rem;color:var(--accent);font-weight:600;letter-spacing:.06em;margin-bottom:28px;}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+h1{font-size:clamp(2.2rem,6vw,5rem);font-weight:900;line-height:1.08;letter-spacing:-.02em;margin-bottom:24px;max-width:900px;}
+h1 .highlight{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:clamp(1rem,2vw,1.3rem);color:var(--sub);max-width:620px;margin:0 auto 40px;line-height:1.7;}
+.hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px;}
+.hero-stats{display:flex;gap:48px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.stat-item{text-align:center;}
+.stat-num{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--accent);}
+.stat-label{font-size:.78rem;color:var(--sub);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;}
+
+/* ── HERO IMAGE ─────────────────────────────────── */
+.hero-visual{width:100%;max-width:1100px;margin:60px auto 0;position:relative;}
+.hero-visual img{width:100%;border-radius:16px;border:1px solid var(--border);box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 80px rgba(0,229,160,.08);}
+.hero-visual::before{content:'LIVE';position:absolute;top:20px;left:20px;background:rgba(255,0,0,.9);color:#fff;font-size:.65rem;font-weight:700;letter-spacing:.15em;padding:4px 10px;border-radius:4px;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── SECTION BASE ───────────────────────────────── */
+section{padding:100px 5%;}
+.section-label{font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;}
+.section-title{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px;}
+.section-sub{color:var(--sub);font-size:1.05rem;max-width:580px;line-height:1.7;}
+.centered{text-align:center;}
+.centered .section-sub{margin:0 auto;}
+
+/* ── HOW IT WORKS ───────────────────────────────── */
+.how{background:var(--panel);}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:64px;}
+.step-card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:36px 28px;position:relative;transition:all .3s;}
+.step-card:hover{border-color:rgba(0,229,160,.3);transform:translateY(-4px);}
+.step-num{font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:900;color:rgba(0,229,160,.12);position:absolute;top:20px;right:24px;}
+.step-icon{font-size:2rem;margin-bottom:20px;}
+.step-title{font-size:1.15rem;font-weight:700;margin-bottom:12px;}
+.step-desc{color:var(--sub);font-size:.9rem;line-height:1.7;}
+
+/* ── FEATURES ───────────────────────────────────── */
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:64px;}
+.feature-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;gap:20px;transition:all .3s;}
+.feature-card:hover{border-color:rgba(0,153,255,.3);background:rgba(0,153,255,.04);}
+.feature-icon-wrap{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+.fc-green{background:rgba(0,229,160,.12);}
+.fc-blue{background:rgba(0,153,255,.12);}
+.fc-orange{background:rgba(255,107,53,.12);}
+.fc-purple{background:rgba(149,76,233,.12);}
+.feature-title{font-size:1.05rem;font-weight:700;margin-bottom:8px;}
+.feature-desc{color:var(--sub);font-size:.88rem;line-height:1.7;}
+
+/* ── ANALYTICS DEMO SECTION ──────────────────────── */
+.analytics{background:var(--panel);}
+.analytics-layout{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-top:64px;}
+.analytics-visuals{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.viz-card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.viz-card img{width:100%;height:200px;object-fit:cover;}
+.viz-label{padding:12px 16px;font-size:.78rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.1em;}
+.analytics-list{display:flex;flex-direction:column;gap:20px;margin-top:32px;}
+.a-item{display:flex;gap:16px;align-items:flex-start;}
+.a-check{width:24px;height:24px;border-radius:6px;background:rgba(0,229,160,.15);border:1px solid rgba(0,229,160,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.a-check svg{width:12px;height:12px;stroke:var(--accent);}
+.a-text strong{font-weight:600;font-size:.95rem;}
+.a-text p{color:var(--sub);font-size:.85rem;margin-top:3px;}
+
+/* ── METRICS STRIP ───────────────────────────────── */
+.metrics{padding:60px 5%;background:linear-gradient(135deg,rgba(0,229,160,.06),rgba(0,153,255,.06));}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center;}
+.metric-val{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;margin-bottom:8px;}
+.metric-val.green{color:var(--accent);}
+.metric-val.blue{color:var(--accent2);}
+.metric-val.orange{color:var(--accent3);}
+.metric-label{color:var(--sub);font-size:.82rem;font-weight:500;}
+
+/* ── DRS SECTION ─────────────────────────────────── */
+.drs{background:var(--bg);}
+.drs-layout{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-top:64px;}
+.drs-verdict{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:40px;text-align:center;}
+.verdict-label{font-size:.75rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);margin-bottom:16px;}
+.verdict-big{font-family:'Orbitron',sans-serif;font-size:2.8rem;font-weight:900;margin-bottom:12px;padding:16px 32px;border-radius:12px;}
+.verdict-out{color:#ff4d4d;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.3);}
+.verdict-notout{color:var(--accent);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);}
+.zones-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;}
+.zone-box{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;}
+.zone-name{font-size:.65rem;color:var(--sub);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;}
+.zone-val{font-size:.95rem;font-weight:700;}
+.zone-in{color:var(--accent);}
+.zone-out{color:#ff4d4d;}
+.conf-bar{margin-top:20px;}
+.conf-label{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:6px;}
+.conf-label span{color:var(--sub);}
+.conf-label strong{color:var(--accent);}
+.bar-track{height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width 1.5s ease;}
+
+/* ── PRICING ─────────────────────────────────────── */
+.pricing{background:var(--panel);}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:64px;}
+.price-card{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:36px;position:relative;transition:all .3s;}
+.price-card.featured{border-color:var(--accent);background:rgba(0,229,160,.04);}
+.featured-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-size:.72rem;font-weight:700;letter-spacing:.1em;padding:4px 16px;border-radius:50px;white-space:nowrap;}
+.price-name{font-size:1rem;font-weight:700;margin-bottom:8px;}
+.price-amount{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;margin-bottom:4px;}
+.price-amount span{font-size:1rem;font-weight:400;color:var(--sub);}
+.price-period{font-size:.8rem;color:var(--sub);margin-bottom:28px;}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
+.price-features li{display:flex;align-items:center;gap:10px;font-size:.88rem;}
+.price-features li::before{content:'✓';color:var(--accent);font-weight:700;font-size:.9rem;}
+.price-features li.no::before{content:'✕';color:rgba(255,255,255,.2);}
+.price-features li.no{color:rgba(255,255,255,.25);}
+
+/* ── TESTIMONIALS ────────────────────────────────── */
+.testimonials{background:var(--bg);}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:64px;}
+.testi-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px;transition:all .3s;}
+.testi-card:hover{border-color:rgba(0,229,160,.2);transform:translateY(-3px);}
+.testi-stars{color:#ffa726;font-size:1rem;margin-bottom:16px;letter-spacing:2px;}
+.testi-quote{font-size:.92rem;color:var(--text);line-height:1.7;margin-bottom:24px;font-style:italic;}
+.testi-author{display:flex;align-items:center;gap:12px;}
+.testi-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#000;}
+.testi-name{font-weight:600;font-size:.88rem;}
+.testi-role{color:var(--sub);font-size:.78rem;}
+
+/* ── CTA SECTION ─────────────────────────────────── */
+.cta-section{padding:120px 5%;text-align:center;background:linear-gradient(135deg,rgba(0,229,160,.05),rgba(0,153,255,.05));border-top:1px solid var(--border);}
+.cta-section h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;letter-spacing:-.02em;margin-bottom:20px;}
+.cta-section p{color:var(--sub);font-size:1.1rem;margin-bottom:40px;}
+
+/* ── FOOTER ──────────────────────────────────────── */
+footer{background:var(--panel);border-top:1px solid var(--border);padding:60px 5% 40px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+.footer-brand .logo{display:block;margin-bottom:16px;}
+.footer-desc{color:var(--sub);font-size:.88rem;line-height:1.7;max-width:280px;}
+.footer-col h4{font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;color:var(--text);}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.footer-col a{color:var(--sub);text-decoration:none;font-size:.88rem;transition:color .2s;}
+.footer-col a:hover{color:var(--accent);}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:28px;color:var(--sub);font-size:.82rem;}
+.footer-social{display:flex;gap:16px;}
+.social-btn{width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--sub);font-size:.8rem;transition:all .2s;}
+.social-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── FLOATING NAV INDICATOR ──────────────────────── */
+.floating-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(11,17,32,.95);border:1px solid var(--border);border-radius:50px;padding:10px 20px;display:flex;gap:20px;align-items:center;backdrop-filter:blur(16px);z-index:99;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.fb-item{font-size:.72rem;font-weight:600;color:var(--sub);cursor:pointer;transition:color .2s;white-space:nowrap;}
+.fb-item:hover,.fb-item.active{color:var(--accent);}
+.fb-dot{width:4px;height:4px;border-radius:50%;background:var(--border);}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media(max-width:900px){
+  .steps-grid,.features-grid,.pricing-grid,.testi-grid{grid-template-columns:1fr;}
+  .analytics-layout,.drs-layout{grid-template-columns:1fr;}
+  .analytics-visuals{grid-template-columns:1fr 1fr;}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .nav-links{display:none;}
+  .hamburger{display:flex;}
+  .floating-bar{display:none;}
+}
+@media(max-width:500px){
+  .analytics-visuals{grid-template-columns:1fr;}
+  .hero-stats{gap:28px;}
+  .footer-grid{grid-template-columns:1fr;}
+}
+
+/* ── ANIMATIONS ──────────────────────────────────── */
+.fade-up{opacity:0;transform:translateY(30px);transition:opacity .7s ease,transform .7s ease;}
+.fade-up.visible{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="logo" href="/">AI<span>DRS</span></a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#drs">DRS</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a class="btn btn-ghost" href="/live">Live Demo</a>
+    <a class="btn btn-primary" href="/setup">Get Started</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    AI-Powered Cricket Analytics
+  </div>
+  <h1>Professional Cricket Analytics<br><span class="highlight">From a Single Camera</span></h1>
+  <p class="hero-sub">Automated ball tracking, pitch maps, wagon wheels, and real-time DRS decisions — everything professional teams use, now available at your ground.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary btn-large" href="/setup">Start Free Trial</a>
+    <a class="btn btn-ghost btn-large" href="/live">Watch Live Demo</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">98%</div>
+      <div class="stat-label">Ball Detection Accuracy</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">30fps</div>
+      <div class="stat-label">Real-Time Processing</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">1 Cam</div>
+      <div class="stat-label">All You Need</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">ICC</div>
+      <div class="stat-label">DRS Compliant</div>
+    </div>
+  </div>
+  <div class="hero-visual fade-up">
+    <img src="/static/img/hero_bg.jpg" onerror="this.style.height='500px';this.style.background='linear-gradient(135deg,#0b1729 0%,#0d2040 50%,#091520 100%)';this.removeAttribute('src');" alt="AI DRS Live Dashboard"/>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how" id="how">
+  <div class="centered fade-up">
+    <div class="section-label">Simple Setup</div>
+    <h2 class="section-title">Up and Running in 3 Steps</h2>
+    <p class="section-sub">No expensive hardware. No complex setup. Just place your phone or camera, and our AI does the rest.</p>
+  </div>
+  <div class="steps-grid fade-up">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-icon">📷</div>
+      <div class="step-title">Place Your Camera</div>
+      <p class="step-desc">Position any camera or smartphone on a tripod behind the non-striker's stumps, roughly 4 meters back. No calibration needed — AI auto-detects pitch geometry.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚡</div>
+      <div class="step-title">AI Starts Tracking</div>
+      <p class="step-desc">Our computer vision pipeline activates at 30fps. Every delivery is detected, tracked, and classified automatically — ball speed, swing, spin, line and length.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-icon">📊</div>
+      <div class="step-title">See Your Analytics</div>
+      <p class="step-desc">Instantly view pitch maps, wagon wheels, DRS decisions, and player performance data on any screen — laptop, phone, or stadium display simultaneously.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section id="features" style="background:var(--bg);">
+  <div class="fade-up">
+    <div class="section-label">What You Get</div>
+    <h2 class="section-title">Everything Your Team Needs</h2>
+    <p class="section-sub">Professional-grade analytics that were previously only available to international teams — now accessible to every club and academy.</p>
+  </div>
+  <div class="features-grid fade-up">
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-green">🎯</div>
+      <div>
+        <div class="feature-title">Automated Ball Tracking</div>
+        <p class="feature-desc">AI detects and tracks every ball at 30fps using computer vision. Measures delivery speed, swing, spin, and precise landing position automatically.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-blue">🗺️</div>
+      <div>
+        <div class="feature-title">Pitch Maps</div>
+        <p class="feature-desc">Visualize bowling line and length with color-coded heatmaps. Identify patterns across an over, session, or full match to optimize bowling strategies.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-orange">🎯</div>
+      <div>
+        <div class="feature-title">Wagon Wheel</div>
+        <p class="feature-desc">See batting shot distribution across the field. Understand where each batter scores, their strengths and weaknesses against different bowling types.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-purple">⚖️</div>
+      <div>
+        <div class="feature-title">AI DRS Decision</div>
+        <p class="feature-desc">ICC-compliant LBW decision system using 3-zone analysis (Pitching, Impact, Wicket). Get OUT / NOT OUT verdicts with confidence percentage in real-time.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-blue">🎬</div>
+      <div>
+        <div class="feature-title">Auto Video Clipping</div>
+        <p class="feature-desc">Every delivery is automatically clipped and organized ball-by-ball. Review any specific delivery in seconds — searchable by bowler, outcome, or delivery type.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-green">☁️</div>
+      <div>
+        <div class="feature-title">Cloud Sync</div>
+        <p class="feature-desc">All data and videos sync to the cloud instantly. Coaches, players, and family access match data from any device, anywhere — even after the match.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-orange">🏆</div>
+      <div>
+        <div class="feature-title">League Management</div>
+        <p class="feature-desc">Full IPL, T20I, ODI, and Test match support. Manage teams, track season stats, and compare player performance across matches and tournaments.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon-wrap fc-purple">📡</div>
+      <div>
+        <div class="feature-title">Multi-Screen Broadcast</div>
+        <p class="feature-desc">Push live data simultaneously to the operator dashboard, stadium scoreboard, and mobile devices via WebSocket. Everyone sees the same data in real-time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ANALYTICS DEMO ── -->
+<section class="analytics" id="analytics">
+  <div class="analytics-layout">
+    <div class="fade-up">
+      <div class="section-label">Analytics Engine</div>
+      <h2 class="section-title">Data That Actually Improves Performance</h2>
+      <p class="section-sub">Move beyond gut feel. Every session generates actionable data to help coaches and players make better decisions.</p>
+      <div class="analytics-list">
+        <div class="a-item">
+          <div class="a-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="a-text">
+            <strong>Ball Speed Measurement</strong>
+            <p>Measures delivery speed in km/h for every ball, tracking variation across an over.</p>
+          </div>
+        </div>
+        <div class="a-item">
+          <div class="a-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="a-text">
+            <strong>Swing & Spin Detection</strong>
+            <p>Detects lateral movement and turn to classify in-swing, out-swing, off-break, leg-break automatically.</p>
+          </div>
+        </div>
+        <div class="a-item">
+          <div class="a-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="a-text">
+            <strong>Line & Length Heatmaps</strong>
+            <p>Color-coded pitch maps showing exactly where each ball landed — good length, short, yorker, full toss.</p>
+          </div>
+        </div>
+        <div class="a-item">
+          <div class="a-check"><svg viewBox="0 0 12 12" fill="none" stroke-width="2"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="a-text">
+            <strong>Shot Selection Analysis</strong>
+            <p>Track shot type, outcome (runs/wicket/dot), and field placement for every batter automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="analytics-visuals fade-up">
+      <div class="viz-card">
+        <img src="C:/Users/Hello-pc/.gemini/antigravity/brain/c1deb9ab-b059-4baf-9d16-36c09b4d8dab/pitch_map_viz_1786892916889.jpg" onerror="this.style.height='200px';this.style.background='linear-gradient(135deg,#0a1f10,#0d3020)';this.removeAttribute('src');" alt="Pitch Map"/>
+        <div class="viz-label">Pitch Map</div>
+      </div>
+      <div class="viz-card">
+        <img src="C:/Users/Hello-pc/.gemini/antigravity/brain/c1deb9ab-b059-4baf-9d16-36c09b4d8dab/wagon_wheel_viz_1786892935108.jpg" onerror="this.style.height='200px';this.style.background='linear-gradient(135deg,#0a101f,#0d1a30)';this.removeAttribute('src');" alt="Wagon Wheel"/>
+        <div class="viz-label">Wagon Wheel</div>
+      </div>
+      <div class="viz-card" style="grid-column:1/-1;">
+        <div style="height:200px;background:linear-gradient(135deg,#0a0f1a,#0d1525);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:2.5rem;font-weight:900;color:var(--accent);">142 km/h</div>
+          <div style="font-size:.75rem;color:var(--sub);letter-spacing:.15em;text-transform:uppercase;">Ball Speed — Last Delivery</div>
+          <div style="display:flex;gap:20px;margin-top:8px;">
+            <div style="text-align:center;"><div style="color:#fff;font-weight:700;">IN-SWINGER</div><div style="font-size:.7rem;color:var(--sub);">Type</div></div>
+            <div style="text-align:center;"><div style="color:var(--accent);font-weight:700;">GOOD LENGTH</div><div style="font-size:.7rem;color:var(--sub);">Length</div></div>
+            <div style="text-align:center;"><div style="color:var(--accent2);font-weight:700;">OFF STUMP</div><div style="font-size:.7rem;color:var(--sub);">Line</div></div>
+          </div>
+        </div>
+        <div class="viz-label">Delivery Metrics</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── METRICS STRIP ── -->
+<div class="metrics">
+  <div class="metrics-grid fade-up">
+    <div>
+      <div class="metric-val green">10,000+</div>
+      <div class="metric-label">Deliveries Analyzed</div>
+    </div>
+    <div>
+      <div class="metric-val blue">50+</div>
+      <div class="metric-label">Supported Leagues</div>
+    </div>
+    <div>
+      <div class="metric-val orange">98.4%</div>
+      <div class="metric-label">DRS Accuracy</div>
+    </div>
+    <div>
+      <div class="metric-val green">&lt;100ms</div>
+      <div class="metric-label">Decision Latency</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRS SECTION ── -->
+<section class="drs" id="drs">
+  <div class="drs-layout">
+    <div class="fade-up">
+      <div class="section-label">Decision Review System</div>
+      <h2 class="section-title">ICC-Compliant AI DRS<br>in Real-Time</h2>
+      <p class="section-sub">Our 3-zone LBW analysis engine works exactly like the professional Hawk-Eye system — but powered by a single camera and AI.</p>
+      <div style="margin-top:32px;display:flex;flex-direction:column;gap:16px;">
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;gap:16px;align-items:center;">
+          <div style="font-size:1.5rem;">🎯</div>
+          <div><strong style="font-size:.95rem;">Zone 1: Pitching</strong><br><span style="color:var(--sub);font-size:.85rem;">Determines if ball pitched in line with stumps or outside leg</span></div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;gap:16px;align-items:center;">
+          <div style="font-size:1.5rem;">📍</div>
+          <div><strong style="font-size:.95rem;">Zone 2: Impact</strong><br><span style="color:var(--sub);font-size:.85rem;">Checks where ball struck the batsman's pad — in line or outside off</span></div>
+        </div>
+        <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;gap:16px;align-items:center;">
+          <div style="font-size:1.5rem;">🏏</div>
+          <div><strong style="font-size:.95rem;">Zone 3: Wickets</strong><br><span style="color:var(--sub);font-size:.85rem;">Projects ball trajectory to determine if it would hit the stumps</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="drs-verdict fade-up">
+      <div class="verdict-label">Live DRS Decision</div>
+      <div class="verdict-big verdict-out" id="demo-verdict">OUT</div>
+      <div class="zones-row">
+        <div class="zone-box">
+          <div class="zone-name">Pitching</div>
+          <div class="zone-val zone-in">IN LINE</div>
+        </div>
+        <div class="zone-box">
+          <div class="zone-name">Impact</div>
+          <div class="zone-val zone-in">IN LINE</div>
+        </div>
+        <div class="zone-box">
+          <div class="zone-name">Wickets</div>
+          <div class="zone-val zone-in">HITTING</div>
+        </div>
+      </div>
+      <div class="conf-bar">
+        <div class="conf-label">
+          <span>AI Confidence</span>
+          <strong id="conf-pct">94%</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="conf-bar" style="width:94%"></div></div>
+      </div>
+      <div style="margin-top:20px;padding:14px;background:rgba(255,255,255,.04);border-radius:10px;font-size:.82rem;color:var(--sub);line-height:1.6;">
+        &#34;Pitched in line with the stumps. Impact in line with middle stump. Ball-tracking shows the ball would have gone on to hit middle and off stump. DECISION: OUT.&#34;
+      </div>
+      <button onclick="cycleDemoVerdict()" style="margin-top:20px;width:100%;" class="btn btn-ghost">Next Demo Verdict</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ── -->
+<section class="pricing" id="pricing">
+  <div class="centered fade-up">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Choose Your Plan</h2>
+    <p class="section-sub">From weekend club cricket to professional leagues — there's a plan for every level of the game.</p>
+  </div>
+  <div class="pricing-grid fade-up">
+    <div class="price-card">
+      <div class="price-name">Starter</div>
+      <div class="price-amount">Free</div>
+      <div class="price-period">Forever free for individuals</div>
+      <ul class="price-features">
+        <li>Ball tracking up to 6 overs/session</li>
+        <li>Basic pitch maps</li>
+        <li>1 player profile</li>
+        <li>7-day video storage</li>
+        <li class="no">Wagon wheel</li>
+        <li class="no">AI DRS decisions</li>
+        <li class="no">Multi-screen broadcast</li>
+        <li class="no">League management</li>
+      </ul>
+      <a class="btn btn-ghost" href="/setup" style="width:100%;justify-content:center;">Get Started Free</a>
+    </div>
+    <div class="price-card featured">
+      <div class="featured-badge">Most Popular</div>
+      <div class="price-name">Club</div>
+      <div class="price-amount">&#8377;2,499<span>/mo</span></div>
+      <div class="price-period">Per ground per month</div>
+      <ul class="price-features">
+        <li>Unlimited ball tracking</li>
+        <li>Full pitch maps & heatmaps</li>
+        <li>Up to 22 player profiles</li>
+        <li>30-day video storage</li>
+        <li>Wagon wheel</li>
+        <li>AI DRS decisions</li>
+        <li>Ground scoreboard display</li>
+        <li class="no">Custom league branding</li>
+      </ul>
+      <a class="btn btn-primary" href="/setup" style="width:100%;justify-content:center;">Start Club Trial</a>
+    </div>
+    <div class="price-card">
+      <div class="price-name">League / Academy</div>
+      <div class="price-amount">&#8377;9,999<span>/mo</span></div>
+      <div class="price-period">Up to 10 teams / grounds</div>
+      <ul class="price-features">
+        <li>Everything in Club</li>
+        <li>Multi-ground management</li>
+        <li>Unlimited player profiles</li>
+        <li>90-day video storage</li>
+        <li>Full league leaderboards</li>
+        <li>Custom branding & logos</li>
+        <li>Multi-screen broadcast</li>
+        <li>Priority API access</li>
+      </ul>
+      <a class="btn btn-ghost" href="/setup" style="width:100%;justify-content:center;">Contact Sales</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section class="testimonials">
+  <div class="centered fade-up">
+    <div class="section-label">What Coaches Say</div>
+    <h2 class="section-title">Trusted by Cricket Coaches</h2>
+  </div>
+  <div class="testi-grid fade-up">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"The pitch maps completely changed how I coach. I can show bowlers exactly where they need to bowl — not just tell them. This is a game-changer for any serious club."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">RK</div>
+        <div><div class="testi-name">Rahul Kapoor</div><div class="testi-role">Head Coach, Delhi Cricket Academy</div></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"We used to spend thousands on analysis. Now a single camera does everything. The DRS system is so accurate our umpires actually trust it. Setup takes 5 minutes."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">AS</div>
+        <div><div class="testi-name">Arjun Singh</div><div class="testi-role">League Coordinator, Mumbai District CA</div></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"The wagon wheel helped us spot a major weakness in our opener's game — vulnerable to short balls outside off. He fixed it in 3 sessions. This data tells you what matters."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">PM</div>
+        <div><div class="testi-name">Priya Mehta</div><div class="testi-role">Batting Coach, KSCA Women's Team</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section fade-up">
+  <h2>Start Tracking Every Ball<br><span style="color:var(--accent)">Today</span></h2>
+  <p>Join thousands of clubs, academies and leagues already using AI DRS to transform their cricket.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+    <a class="btn btn-primary btn-large" href="/setup">Setup Your Match Now</a>
+    <a class="btn btn-ghost btn-large" href="/live">See Live Dashboard</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="logo" href="/">AI<span>DRS</span></a>
+      <p class="footer-desc">Professional cricket analytics powered by AI. One camera, complete match intelligence — for every level of the game.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#analytics">Analytics</a></li>
+        <li><a href="#drs">DRS System</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Screens</h4>
+      <ul>
+        <li><a href="/setup">Match Setup</a></li>
+        <li><a href="/live">Live Dashboard</a></li>
+        <li><a href="/scoreboard">Ground Scoreboard</a></li>
+        <li><a href="/docs">API Docs</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Camera Setup Guide</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AI DRS. ICC-compliant cricket analytics platform.</span>
+    <div class="footer-social">
+      <a class="social-btn" href="#">T</a>
+      <a class="social-btn" href="#">in</a>
+      <a class="social-btn" href="#">YT</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ── FLOATING NAV ── -->
+<div class="floating-bar">
+  <div class="fb-item active" onclick="scrollTo('home')">Home</div>
+  <div class="fb-dot"></div>
+  <div class="fb-item" onclick="scrollTo('how')">Setup</div>
+  <div class="fb-dot"></div>
+  <div class="fb-item" onclick="scrollTo('features')">Features</div>
+  <div class="fb-dot"></div>
+  <div class="fb-item" onclick="scrollTo('analytics')">Analytics</div>
+  <div class="fb-dot"></div>
+  <div class="fb-item" onclick="scrollTo('drs')">DRS</div>
+  <div class="fb-dot"></div>
+  <div class="fb-item" onclick="scrollTo('pricing')">Pricing</div>
+</div>
+
+<script>
+// Scroll animations
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.12});
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+// DRS demo cycle
+const verdicts = [
+  {v:'OUT',cls:'verdict-out',conf:94,zones:['IN LINE','IN LINE','HITTING'],desc:'Pitched in line. Impact in line with middle stump. Ball-tracking shows hitting middle and off. DECISION: OUT.'},
+  {v:'NOT OUT',cls:'verdict-notout',conf:88,zones:['OUTSIDE LEG','—','—'],desc:'Pitched outside leg stump. Not out regardless of impact. DECISION: NOT OUT — pitching outside leg.'},
+  {v:'NOT OUT',cls:'verdict-notout',conf:76,zones:['IN LINE','OUTSIDE OFF','—'],desc:'Pitched in line. Impact was outside off stump. DECISION: NOT OUT — impact outside off.'},
+  {v:'OUT',cls:'verdict-out',conf:97,zones:['IN LINE','IN LINE','HITTING'],desc:'Pitched in line. Struck on the pad in line. Full trajectory analysis shows hitting leg stump. DECISION: OUT.'},
+];
+let demoIdx = 0;
+function cycleDemoVerdict(){
+  demoIdx = (demoIdx+1)%verdicts.length;
+  const d = verdicts[demoIdx];
+  const vb = document.getElementById('demo-verdict');
+  vb.className = 'verdict-big ' + d.cls;
+  vb.textContent = d.v;
+  document.getElementById('conf-pct').textContent = d.conf+'%';
+  document.getElementById('conf-bar').style.width = d.conf+'%';
+  const zv = document.querySelectorAll('.zone-val');
+  d.zones.forEach((z,i) => {
+    if(zv[i]){
+      zv[i].textContent = z;
+      zv[i].className = 'zone-val ' + (z==='HITTING'||z==='IN LINE' ? 'zone-in' : 'zone-out');
+    }
+  });
+}
+
+// Floating nav scroll
+function scrollTo(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+window.addEventListener('scroll', () => {
+  const sections = ['home','how','features','analytics','drs','pricing'];
+  const items = document.querySelectorAll('.fb-item');
+  let current = 'home';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if(el && window.scrollY >= el.offsetTop - 200) current = id;
+  });
+  items.forEach((item,i) => item.classList.toggle('active', sections[i]===current));
+});
+
+function toggleMenu(){
+  const links = document.querySelector('.nav-links');
+  links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+  links.style.flexDirection = 'column';
+  links.style.position = 'absolute';
+  links.style.top = '70px';
+  links.style.left = '0';
+  links.style.right = '0';
+  links.style.background = 'rgba(6,9,15,.98)';
+  links.style.padding = '20px 5%';
+  links.style.gap = '16px';
+  links.style.borderBottom = '1px solid rgba(255,255,255,.07)';
+}
+</script>
+</body>
+</html>

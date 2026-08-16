@@ -71,6 +71,13 @@ app.include_router(llm_router)
 
 from fastapi.responses import HTMLResponse
 
+@app.get("/", response_class=HTMLResponse, tags=["Marketing Site"])
+def homepage():
+    """AI DRS platform homepage — fulltrack.ai-style marketing site."""
+    path = Path(__file__).parent.parent / "static" / "index.html"
+    return HTMLResponse(content=path.read_text(encoding="utf-8"))
+
+
 @app.get("/live", response_class=HTMLResponse, tags=["Live Dashboard"])
 def live_dashboard():
     """Serves the full-screen AI DRS Live Operator Dashboard UI."""
