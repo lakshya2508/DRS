@@ -49,11 +49,13 @@ from ai_drs.api.minimal_api import minimal_drs_router
 from ai_drs.api.real_model_router import real_model_router
 from ai_drs.api.live_match_router import live_match_router
 from ai_drs.api.live_pipeline_router import live_pipeline_router
+from ai_drs.api.calibration_router import calibration_router
 
 app.include_router(minimal_drs_router)
 app.include_router(real_model_router)
 app.include_router(live_match_router)
 app.include_router(live_pipeline_router)
+app.include_router(calibration_router)
 app.include_router(match_router)
 app.include_router(tournament_router)
 app.include_router(coach_router)
@@ -74,6 +76,29 @@ def live_dashboard():
     """Serves the full-screen AI DRS Live Operator Dashboard UI."""
     dashboard_path = Path(__file__).parent.parent / "static" / "live_dashboard.html"
     return HTMLResponse(content=dashboard_path.read_text(encoding="utf-8"))
+
+
+@app.get("/scoreboard", response_class=HTMLResponse, tags=["Live Dashboard"])
+def ground_scoreboard():
+    """Serves the full-screen Ground Scoreboard for stadium displays."""
+    board_path = Path(__file__).parent.parent / "static" / "ground_scoreboard.html"
+    return HTMLResponse(content=board_path.read_text(encoding="utf-8"))
+
+
+@app.get("/api/v1/leagues", tags=["League Database"])
+def get_league_teams():
+    """Returns all supported cricket league teams with full player rosters."""
+    from ai_drs.match.cricket_league_db import IPL_TEAMS, INDIA_T20I
+    teams = {k: v.model_dump() for k, v in IPL_TEAMS.items()}
+    teams["IND"] = INDIA_T20I.model_dump()
+    return {"total_teams": len(teams), "teams": teams}
+
+
+@app.get("/setup", response_class=HTMLResponse, tags=["Live Dashboard"])
+def match_setup_wizard():
+    """Serves the Match Setup Wizard — configure league, teams and camera before going live."""
+    setup_path = Path(__file__).parent.parent / "static" / "match_setup.html"
+    return HTMLResponse(content=setup_path.read_text(encoding="utf-8"))
 
 
 @app.websocket("/ws/match/{match_id}")

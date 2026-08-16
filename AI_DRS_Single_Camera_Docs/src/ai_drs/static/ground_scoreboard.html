@@ -1,0 +1,294 @@
+"""
+Ground Scoreboard Display — Full-screen HTML for stadium screens, projectors,
+and second monitors at the ground. Auto-refreshes via WebSocket.
+"""
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI DRS — Ground Scoreboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap');
+
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:#000;
+    color:#fff;
+    font-family:'Orbitron',sans-serif;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ── SCOREBOARD TOP ─────────────────────────── */
+  #scoreboard {
+    display:flex;
+    align-items:stretch;
+    background:linear-gradient(135deg,#0a0f1a 0%,#0d1a2e 100%);
+    border-bottom:3px solid #00c8ff;
+    flex:0 0 auto;
+  }
+
+  .score-block {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:18px 10px;
+    border-right:1px solid rgba(0,200,255,.15);
+  }
+  .team-name  { font-size:clamp(1rem,3vw,2rem); color:#00c8ff; letter-spacing:.08em; }
+  .team-score { font-size:clamp(2rem,8vw,5.5rem); font-weight:900; line-height:1; }
+  .team-overs { font-size:clamp(.6rem,1.5vw,.9rem); color:#5a7a9a; margin-top:4px; }
+
+  #divider { display:flex; align-items:center; justify-content:center;
+              padding:0 20px; font-size:2rem; color:#5a7a9a; }
+
+  /* ── MAIN DISPLAY ───────────────────────────── */
+  #main-display {
+    flex:1;
+    display:grid;
+    place-items:center;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* Camera frame */
+  #camera-view {
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#050a10;
+  }
+  #cam-img { max-width:100%; max-height:100%; object-fit:contain; }
+  #no-cam  { text-align:center; opacity:.3; }
+  #no-cam svg { width:80px; }
+
+  /* Verdict splash */
+  #verdict-splash {
+    position:absolute;
+    bottom:0; left:0; right:0;
+    padding:20px 40px;
+    display:flex;
+    align-items:center;
+    gap:24px;
+    backdrop-filter:blur(6px);
+    background:rgba(0,0,0,.65);
+    border-top:2px solid rgba(255,255,255,.08);
+    transition:all .3s;
+  }
+
+  #verdict-box {
+    min-width:220px;
+    text-align:center;
+    padding:14px 20px;
+    border-radius:10px;
+    font-size:clamp(1.2rem,4vw,2.8rem);
+    font-weight:900;
+    letter-spacing:.1em;
+    text-shadow:0 0 40px currentColor;
+    transition:all .35s ease;
+  }
+  .v-out         { background:rgba(183,28,28,.9);  color:#ff6b6b; }
+  .v-not-out     { background:rgba(27,94,32,.9);   color:#69f0ae; }
+  .v-inconclusive{ background:rgba(230,81,0,.9);   color:#ffb74d; }
+  .v-tracking    { background:rgba(13,25,50,.9);   color:#5a7a9a; }
+
+  #verdict-details {
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  .zone-pill {
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:8px;
+    padding:10px 14px;
+    text-align:center;
+  }
+  .zp-label { font-family:'Rajdhani',sans-serif; font-size:.65rem; color:#5a7a9a;
+               text-transform:uppercase; letter-spacing:.12em; margin-bottom:4px; }
+  .zp-value { font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:700; }
+
+  #voice-text {
+    flex:1;
+    font-family:'Rajdhani',sans-serif;
+    font-size:clamp(.8rem,2vw,1.2rem);
+    color:#a0d8ef;
+    font-style:italic;
+    line-height:1.4;
+  }
+
+  /* ── TICKER ─────────────────────────────────── */
+  #ticker {
+    flex:0 0 36px;
+    background:#00c8ff;
+    color:#000;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:.95rem;
+    letter-spacing:.06em;
+  }
+  #ticker-content {
+    white-space:nowrap;
+    animation:ticker-scroll 30s linear infinite;
+  }
+  @keyframes ticker-scroll {
+    from { transform:translateX(100vw); }
+    to   { transform:translateX(-100%); }
+  }
+
+  /* Responsiveness for mobile / tablet */
+  @media(max-width:600px) {
+    #verdict-details { grid-template-columns:1fr; }
+    #verdict-splash  { flex-direction:column; }
+    #voice-text { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SCOREBOARD ── -->
+<div id="scoreboard">
+  <div class="score-block">
+    <div class="team-name" id="team1-name">—</div>
+    <div class="team-score" id="team1-score">—</div>
+    <div class="team-overs" id="team1-overs"></div>
+  </div>
+  <div id="divider">VS</div>
+  <div class="score-block">
+    <div class="team-name" id="team2-name">—</div>
+    <div class="team-score" id="team2-score">—</div>
+    <div class="team-overs" id="team2-overs"></div>
+  </div>
+</div>
+
+<!-- ── MAIN DISPLAY ── -->
+<div id="main-display">
+  <div id="camera-view">
+    <img id="cam-img" alt="Live Feed" style="display:none"/>
+    <div id="no-cam">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.2">
+        <rect x="2" y="6" width="20" height="14" rx="2"/>
+        <path d="M22 10l-4 2 4 2"/>
+      </svg>
+      <p style="font-family:Rajdhani,sans-serif;margin-top:10px;font-size:.9rem">Waiting for live feed...</p>
+    </div>
+  </div>
+
+  <div id="verdict-splash">
+    <div id="verdict-box" class="v-tracking">WAITING</div>
+    <div id="verdict-details">
+      <div class="zone-pill">
+        <div class="zp-label">Pitching</div>
+        <div class="zp-value" id="zp-pitch">—</div>
+      </div>
+      <div class="zone-pill">
+        <div class="zp-label">Impact</div>
+        <div class="zp-value" id="zp-impact">—</div>
+      </div>
+      <div class="zone-pill">
+        <div class="zp-label">Wickets</div>
+        <div class="zp-value" id="zp-wicket">—</div>
+      </div>
+    </div>
+    <div id="voice-text">AI DRS System Ready...</div>
+  </div>
+</div>
+
+<!-- ── TICKER ── -->
+<div id="ticker">
+  <div id="ticker-content">
+    &nbsp;&nbsp;&nbsp;AI DRS LIVE MATCH SYSTEM &nbsp;●&nbsp;
+    POWERED BY SINGLE-CAMERA AI PIPELINE &nbsp;●&nbsp;
+    ICC DRS 3-ZONE LBW ANALYSIS &nbsp;●&nbsp;
+    ULTRAEDGE SNICKO AUDIO DETECTION ACTIVE &nbsp;●&nbsp;
+    REAL-TIME BALL TRACKING AT 30 FPS &nbsp;●&nbsp;&nbsp;&nbsp;
+  </div>
+</div>
+
+<script>
+let ws = null;
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/live`);
+
+  ws.onmessage = evt => {
+    const d = JSON.parse(evt.data);
+    if (d.type) return;
+    updateBoard(d);
+  };
+
+  ws.onclose = () => setTimeout(connect, 2000);
+}
+
+function updateBoard(d) {
+  // Camera frame
+  if (d.frame_b64) {
+    const img = document.getElementById('cam-img');
+    img.src = 'data:image/jpeg;base64,' + d.frame_b64;
+    img.style.display = 'block';
+    document.getElementById('no-cam').style.display = 'none';
+  }
+
+  // Verdict box
+  const box  = document.getElementById('verdict-box');
+  const maps = {
+    OUT:          'v-out',
+    NOT_OUT:      'v-not-out',
+    INCONCLUSIVE: 'v-inconclusive',
+    TRACKING:     'v-tracking',
+  };
+  box.className  = `v-${d.verdict?.toLowerCase().replace('_','-')}` in {
+    'v-out':true,'v-not-out':true,'v-inconclusive':true,'v-tracking':true
+  } ? `v-${d.verdict?.toLowerCase().replace('_','-')}` : 'v-tracking';
+  box.className  = maps[d.verdict] || 'v-tracking';
+  box.textContent = (d.verdict || 'WAITING').replace('_',' ');
+
+  // Zones
+  document.getElementById('zp-pitch').textContent  = (d.pitching_zone||'—').replace(/_/g,' ');
+  document.getElementById('zp-impact').textContent = (d.impact_zone||'—').replace(/_/g,' ');
+  document.getElementById('zp-wicket').textContent = (d.wicket_zone||'—').replace(/_/g,' ');
+
+  // Voice
+  document.getElementById('voice-text').textContent = d.voice_callout || '';
+
+  // Ticker update
+  if (d.verdict && d.verdict !== 'TRACKING') {
+    const ticker = document.getElementById('ticker-content');
+    const msg = ` ● ${d.verdict.replace('_',' ')} — Conf:${d.confidence_pct}% Speed:${d.ball_speed_kmh}km/h `;
+    ticker.textContent = msg + ticker.textContent;
+  }
+}
+
+// Fetch match state to update scoreboard
+async function pollMatch() {
+  try {
+    const r = await fetch('/api/v1/live/match/list');
+    const matches = await r.json();
+    if (matches.length > 0) {
+      const m = matches[0];
+      document.getElementById('team1-name').textContent  = m.batting_team?.short_name || '—';
+      document.getElementById('team1-score').textContent = `${m.batting_score}/${m.batting_wickets}`;
+      document.getElementById('team1-overs').textContent = `(${m.current_over-1}.${m.current_ball} ov)`;
+      document.getElementById('team2-name').textContent  = m.bowling_team?.short_name || '—';
+    }
+  } catch {}
+}
+
+connect();
+setInterval(pollMatch, 3000);
+</script>
+</body>
+</html>

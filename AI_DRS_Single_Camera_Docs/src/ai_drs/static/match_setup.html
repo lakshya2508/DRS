@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI DRS — Match Setup Wizard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600&family=Rajdhani:wght@600;700&display=swap');
+
+  :root {
+    --bg: #060a0f; --panel: #0d1520; --border: #1a2d44;
+    --accent: #00c8ff; --green: #00e676; --red: #ff1744; --amber: #ffa726;
+    --text: #d0e8ff; --sub: #5a7a9a;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif;
+         min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:flex-start; padding:40px 20px; }
+
+  h1 { font-family:'Orbitron',sans-serif; font-size:1.4rem; color:var(--accent);
+       letter-spacing:.12em; margin-bottom:8px; }
+  .subtitle { color:var(--sub); font-size:.85rem; margin-bottom:40px; }
+
+  .wizard { width:100%; max-width:780px; }
+
+  /* ── Steps indicator ─── */
+  .steps { display:flex; gap:0; margin-bottom:36px; }
+  .step { flex:1; display:flex; flex-direction:column; align-items:center; position:relative; }
+  .step:not(:last-child)::after {
+    content:''; position:absolute; top:16px; left:50%; width:100%;
+    height:2px; background:var(--border); z-index:0;
+  }
+  .step.done::after  { background:var(--accent); }
+  .step-dot { width:32px; height:32px; border-radius:50%; border:2px solid var(--border);
+               background:var(--panel); display:flex; align-items:center; justify-content:center;
+               font-family:'Orbitron',sans-serif; font-size:.75rem; z-index:1;
+               transition:all .3s; }
+  .step.active .step-dot { border-color:var(--accent); color:var(--accent); }
+  .step.done   .step-dot { border-color:var(--accent); background:var(--accent); color:#000; }
+  .step-label { font-size:.65rem; color:var(--sub); margin-top:6px; text-align:center;
+                 font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .step.active .step-label { color:var(--accent); }
+
+  /* ── Card ─── */
+  .card { background:var(--panel); border:1px solid var(--border);
+          border-radius:14px; padding:32px; margin-bottom:20px; }
+  .card-title { font-family:'Rajdhani',sans-serif; font-size:1.2rem; font-weight:700;
+                 color:var(--accent); margin-bottom:20px; }
+
+  /* ── Form elements ─── */
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  label { font-size:.72rem; color:var(--sub); text-transform:uppercase;
+           letter-spacing:.1em; font-weight:600; }
+  input, select {
+    background:rgba(255,255,255,.04); border:1px solid var(--border);
+    border-radius:8px; padding:11px 14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:.9rem;
+    transition:border-color .2s;
+  }
+  input:focus, select:focus { outline:none; border-color:var(--accent); }
+  select option { background:#0d1520; }
+
+  /* ── Team selector ─── */
+  .team-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+  .team-btn {
+    border:1px solid var(--border); background:rgba(255,255,255,.03);
+    border-radius:8px; padding:10px 6px; text-align:center; cursor:pointer;
+    transition:all .2s; color:var(--text); font-family:'Rajdhani',sans-serif;
+    font-weight:700; font-size:.85rem;
+  }
+  .team-btn:hover   { border-color:var(--accent); background:rgba(0,200,255,.08); }
+  .team-btn.selected-bat { border-color:#00e676; background:rgba(0,230,118,.12); color:#00e676; }
+  .team-btn.selected-bowl{ border-color:#ff1744; background:rgba(255,23,68,.1);  color:#ff1744; }
+  .team-legend { display:flex; gap:16px; margin-bottom:12px; font-size:.72rem; }
+  .leg-item { display:flex; align-items:center; gap:6px; }
+  .leg-dot  { width:10px; height:10px; border-radius:50%; }
+
+  /* ── Buttons ─── */
+  .btn-row { display:flex; gap:12px; justify-content:flex-end; margin-top:24px; }
+  .btn { padding:11px 28px; border-radius:8px; border:none; cursor:pointer;
+          font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.95rem;
+          letter-spacing:.06em; transition:all .2s; }
+  .btn-primary { background:var(--accent); color:#000; }
+  .btn-primary:hover { background:#33d4ff; box-shadow:0 0 20px rgba(0,200,255,.4); }
+  .btn-ghost   { background:rgba(255,255,255,.07); color:var(--text); }
+  .btn-success { background:#00e676; color:#000; }
+  .btn-success:hover { box-shadow:0 0 20px rgba(0,230,118,.4); }
+
+  /* ── Step panels ─── */
+  .step-panel { display:none; }
+  .step-panel.active { display:block; }
+
+  /* ── Summary card ─── */
+  .summary-row { display:flex; justify-content:space-between;
+                  padding:10px 0; border-bottom:1px solid var(--border); }
+  .summary-row:last-child { border-bottom:none; }
+  .summary-key { color:var(--sub); font-size:.82rem; }
+  .summary-val { color:var(--text); font-weight:600; font-size:.82rem; }
+
+  /* ── Success screen ─── */
+  #success-screen { display:none; text-align:center; padding:60px 20px; }
+  #success-screen .icon { font-size:4rem; margin-bottom:20px; }
+  #success-screen h2 { font-family:'Orbitron',sans-serif; color:var(--green);
+                         font-size:1.5rem; margin-bottom:12px; }
+  .link-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:28px; }
+  .link-card { background:var(--panel); border:1px solid var(--border);
+                border-radius:10px; padding:16px; text-decoration:none; color:var(--text);
+                transition:all .2s; }
+  .link-card:hover { border-color:var(--accent); background:rgba(0,200,255,.06); }
+  .link-card-icon { font-size:1.8rem; margin-bottom:8px; }
+  .link-card-label { font-family:'Rajdhani',sans-serif; font-size:.85rem; font-weight:700; }
+</style>
+</head>
+<body>
+<h1>&#9651; AI DRS MATCH SETUP</h1>
+<p class="subtitle">Configure your live match before starting the AI pipeline</p>
+
+<div class="wizard" id="wizard">
+
+  <!-- Steps indicator -->
+  <div class="steps">
+    <div class="step active" id="step-ind-1"><div class="step-dot">1</div><div class="step-label">League</div></div>
+    <div class="step"        id="step-ind-2"><div class="step-dot">2</div><div class="step-label">Teams</div></div>
+    <div class="step"        id="step-ind-3"><div class="step-dot">3</div><div class="step-label">Camera</div></div>
+    <div class="step"        id="step-ind-4"><div class="step-dot">4</div><div class="step-label">Launch</div></div>
+  </div>
+
+  <!-- Step 1: League & Format -->
+  <div class="step-panel active" id="panel-1">
+    <div class="card">
+      <div class="card-title">&#127942; League & Match Format</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>League</label>
+          <select id="league">
+            <option value="IPL">IPL — Indian Premier League</option>
+            <option value="T20I">T20 International</option>
+            <option value="ODI">ODI — One Day International</option>
+            <option value="TEST">Test Match</option>
+            <option value="SA20">SA20 — South Africa</option>
+            <option value="BBL">BBL — Big Bash League</option>
+            <option value="CPL">CPL — Caribbean Premier League</option>
+            <option value="THE_HUNDRED">The Hundred</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Total Overs</label>
+          <input type="number" id="total-overs" value="20" min="1" max="90"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Venue / Ground Name</label>
+          <input type="text" id="venue" placeholder="e.g. Wankhede Stadium, Mumbai"/>
+        </div>
+        <div class="form-group">
+          <label>Match Date</label>
+          <input type="date" id="match-date"/>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="goStep(2)">Next &#8594;</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Teams -->
+  <div class="step-panel" id="panel-2">
+    <div class="card">
+      <div class="card-title">&#127955; Select Teams</div>
+      <div class="team-legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#00e676"></div> Batting First</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ff1744"></div> Bowling First</div>
+      </div>
+      <div class="team-grid" id="team-grid"></div>
+      <div class="form-row" style="margin-top:16px">
+        <div class="form-group">
+          <label>Batting Team Custom Name</label>
+          <input type="text" id="bat-name" placeholder="Auto-filled from selection"/>
+        </div>
+        <div class="form-group">
+          <label>Bowling Team Custom Name</label>
+          <input type="text" id="bowl-name" placeholder="Auto-filled from selection"/>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next &#8594;</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Camera -->
+  <div class="step-panel" id="panel-3">
+    <div class="card">
+      <div class="card-title">&#127909; Camera Configuration</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Camera Source</label>
+          <select id="cam-source">
+            <option value="WEBCAM">Webcam (USB / Built-in)</option>
+            <option value="RTSP">IP Camera / RTSP Stream</option>
+            <option value="VIDEO">Pre-recorded Video File</option>
+            <option value="SYNTHETIC" selected>Synthetic (Demo / Testing)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Source Path / URL</label>
+          <input type="text" id="cam-path" value="0" placeholder="0 for webcam, RTSP URL or file path"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Target FPS</label>
+          <select id="cam-fps">
+            <option value="25">25 FPS</option>
+            <option value="30" selected>30 FPS</option>
+            <option value="60">60 FPS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Resolution</label>
+          <select id="cam-res">
+            <option value="1280x720">1280×720 (HD)</option>
+            <option value="1920x1080">1920×1080 (Full HD)</option>
+            <option value="640x480">640×480 (Low)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Next &#8594;</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Review & Launch -->
+  <div class="step-panel" id="panel-4">
+    <div class="card">
+      <div class="card-title">&#9654; Review & Launch</div>
+      <div id="summary"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(3)">&#8592; Back</button>
+      <button class="btn btn-success" onclick="launchMatch()">&#9654; LAUNCH LIVE MATCH</button>
+    </div>
+  </div>
+
+</div><!-- /wizard -->
+
+<!-- Success -->
+<div id="success-screen">
+  <div class="icon">&#9989;</div>
+  <h2>MATCH LAUNCHED!</h2>
+  <p style="color:var(--sub);margin-bottom:8px">Pipeline is running. Open your screens:</p>
+  <div class="link-grid">
+    <a class="link-card" href="/live" target="_blank">
+      <div class="link-card-icon">&#128187;</div>
+      <div class="link-card-label">Operator Dashboard</div>
+    </a>
+    <a class="link-card" href="/scoreboard" target="_blank">
+      <div class="link-card-icon">&#127942;</div>
+      <div class="link-card-label">Ground Scoreboard</div>
+    </a>
+    <a class="link-card" href="/docs" target="_blank">
+      <div class="link-card-icon">&#128196;</div>
+      <div class="link-card-label">API Docs</div>
+    </a>
+  </div>
+</div>
+
+<script>
+const TEAMS = ["MI","CSK","RCB","KKR","GT","SRH","LSG","PBKS","RR","DC","IND","AUS","ENG","PAK","SA","NZL","WI","SL","BAN","AFG"];
+const TEAM_NAMES = {
+  MI:"Mumbai Indians",CSK:"Chennai Super Kings",RCB:"Royal Challengers Bengaluru",
+  KKR:"Kolkata Knight Riders",GT:"Gujarat Titans",SRH:"Sunrisers Hyderabad",
+  LSG:"Lucknow Super Giants",PBKS:"Punjab Kings",RR:"Rajasthan Royals",
+  DC:"Delhi Capitals",IND:"India",AUS:"Australia",ENG:"England",
+  PAK:"Pakistan",SA:"South Africa",NZL:"New Zealand",WI:"West Indies",
+  SL:"Sri Lanka",BAN:"Bangladesh",AFG:"Afghanistan"
+};
+
+let batTeam = null, bowlTeam = null;
+let currentStep = 1;
+
+// Build team grid
+const grid = document.getElementById('team-grid');
+TEAMS.forEach(t => {
+  const btn = document.createElement('div');
+  btn.className = 'team-btn';
+  btn.textContent = t;
+  btn.id = `team-btn-${t}`;
+  btn.onclick = () => selectTeam(t);
+  grid.appendChild(btn);
+});
+
+// Set today's date
+document.getElementById('match-date').value = new Date().toISOString().slice(0,10);
+
+function selectTeam(t) {
+  if (!batTeam) {
+    batTeam = t;
+    document.getElementById(`team-btn-${t}`).classList.add('selected-bat');
+    document.getElementById('bat-name').value = TEAM_NAMES[t] || t;
+  } else if (t !== batTeam && !bowlTeam) {
+    bowlTeam = t;
+    document.getElementById(`team-btn-${t}`).classList.add('selected-bowl');
+    document.getElementById('bowl-name').value = TEAM_NAMES[t] || t;
+  } else {
+    // Reset
+    if (batTeam) document.getElementById(`team-btn-${batTeam}`)?.classList.remove('selected-bat');
+    if (bowlTeam) document.getElementById(`team-btn-${bowlTeam}`)?.classList.remove('selected-bowl');
+    batTeam = null; bowlTeam = null;
+    selectTeam(t);
+  }
+}
+
+function goStep(n) {
+  document.getElementById(`panel-${currentStep}`).classList.remove('active');
+  document.getElementById(`step-ind-${currentStep}`).classList.remove('active');
+  if (n > currentStep) document.getElementById(`step-ind-${currentStep}`).classList.add('done');
+  currentStep = n;
+  document.getElementById(`panel-${n}`).classList.add('active');
+  document.getElementById(`step-ind-${n}`).classList.add('active');
+  if (n === 4) buildSummary();
+}
+
+function buildSummary() {
+  const s = document.getElementById('summary');
+  const rows = [
+    ['League',           document.getElementById('league').value],
+    ['Total Overs',      document.getElementById('total-overs').value],
+    ['Venue',            document.getElementById('venue').value || '—'],
+    ['Match Date',       document.getElementById('match-date').value],
+    ['Batting Team',     document.getElementById('bat-name').value || batTeam || '—'],
+    ['Bowling Team',     document.getElementById('bowl-name').value || bowlTeam || '—'],
+    ['Camera Source',    document.getElementById('cam-source').value],
+    ['Camera Path',      document.getElementById('cam-path').value],
+    ['FPS',              document.getElementById('cam-fps').value],
+    ['Resolution',       document.getElementById('cam-res').value],
+  ];
+  s.innerHTML = rows.map(([k,v]) =>
+    `<div class="summary-row"><span class="summary-key">${k}</span><span class="summary-val">${v}</span></div>`
+  ).join('');
+}
+
+async function launchMatch() {
+  const league    = document.getElementById('league').value;
+  const overs     = parseInt(document.getElementById('total-overs').value);
+  const batName   = document.getElementById('bat-name').value || batTeam || 'Team A';
+  const bowlName  = document.getElementById('bowl-name').value || bowlTeam || 'Team B';
+  const batShort  = batTeam || batName.slice(0,3).toUpperCase();
+  const bowlShort = bowlTeam || bowlName.slice(0,3).toUpperCase();
+  const camSrc    = document.getElementById('cam-source').value;
+  const camPath   = document.getElementById('cam-path').value || '0';
+
+  // 1. Create match
+  await fetch('/api/v1/live/match/create', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      league, match_format: league,
+      team1_name: batName, team1_short: batShort,
+      team2_name: bowlName, team2_short: bowlShort,
+      total_overs: overs
+    })
+  });
+
+  // 2. Start pipeline
+  await fetch(`/pipeline/start?source=${camSrc}&source_path=${encodeURIComponent(camPath)}`, {method:'POST'});
+
+  // 3. Show success
+  document.getElementById('wizard').style.display = 'none';
+  document.getElementById('success-screen').style.display = 'block';
+}
+</script>
+</body>
+</html>

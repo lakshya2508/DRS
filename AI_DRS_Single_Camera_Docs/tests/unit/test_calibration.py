@@ -1,124 +1,119 @@
 """
-Unit tests for Camera and Pitch Homography Calibration Module
+Unit tests for AutoCalibrator — camera-to-pitch geometry calibration.
 """
 
-import tempfile
-from pathlib import Path
 import numpy as np
 import pytest
+from fastapi.testclient import TestClient
 
-from ai_drs.calibration.pitch_calibration import (
-    PitchCalibrator,
-    CalibrationData,
-    Point2D,
-    STANDARD_PITCH_LENGTH_M,
+from ai_drs.api.main import app
+from ai_drs.calibration.auto_calibrator import (
+    AutoCalibrator, CalibrationPoints, CalibrationResult
 )
 
-
-@pytest.fixture
-def synthetic_homography_points():
-    """Generates synthetic 4-point correspondence representing a camera behind bowler view."""
-    # 4 Pitch world ground points (meters)
-    pitch_pts = [
-        Point2D(x=-1.32, y=1.22),   # Bowler crease left
-        Point2D(x=1.32, y=1.22),    # Bowler crease right
-        Point2D(x=1.32, y=18.90),   # Batter crease right
-        Point2D(x=-1.32, y=18.90),  # Batter crease left
-    ]
-
-    # Corresponding synthetic image pixel points (simulating trapezoidal perspective projection)
-    image_pts = [
-        Point2D(x=300.0, y=900.0),  # Bowler crease left (near, wide)
-        Point2D(x=980.0, y=900.0),  # Bowler crease right (near, wide)
-        Point2D(x=700.0, y=300.0),  # Batter crease right (far, narrow)
-        Point2D(x=580.0, y=300.0),  # Batter crease left (far, narrow)
-    ]
-
-    return image_pts, pitch_pts
+client = TestClient(app)
 
 
-def test_standard_pitch_references():
-    refs = PitchCalibrator.get_standard_pitch_references()
-    assert "bowler_stump_base" in refs
-    assert "batter_stump_base" in refs
-    assert refs["batter_stump_base"].y == STANDARD_PITCH_LENGTH_M
-    assert refs["bowler_stump_base"].x == 0.0
-
-
-def test_calibrate_and_transform(synthetic_homography_points):
-    image_pts, pitch_pts = synthetic_homography_points
-    calibrator = PitchCalibrator(max_reprojection_error_px=5.0)
-
-    calib = calibrator.calibrate(
-        image_points=image_pts,
-        pitch_points=pitch_pts,
-        image_size=(1280, 720),
-        camera_id="cam_behind_bowler_1"
+def test_manual_calibration_basic():
+    cal = AutoCalibrator()
+    points = CalibrationPoints(
+        batter_crease_left  = (560.0, 520.0),
+        batter_crease_right = (720.0, 520.0),
+        off_stump_base      = (672.0, 510.0),
+        leg_stump_base      = (608.0, 510.0),
     )
-
-    assert isinstance(calib, CalibrationData)
-    assert calib.is_valid is True
-    assert calib.reprojection_error_px < 1.0  # Perfect synthetic alignment
-
-    # Test forward transform: image pixel -> pitch meter
-    pitch_res = PitchCalibrator.image_to_pitch(image_pts[0], calib.homography_matrix)
-    assert abs(pitch_res.x - pitch_pts[0].x) < 0.05
-    assert abs(pitch_res.y - pitch_pts[0].y) < 0.05
-
-    # Test inverse transform: pitch meter -> image pixel
-    image_res = PitchCalibrator.pitch_to_image(pitch_pts[2], calib.inv_homography_matrix)
-    assert abs(image_res.x - image_pts[2].x) < 1.0
-    assert abs(image_res.y - image_pts[2].y) < 1.0
+    result = cal.calibrate_from_points(points, 1280, 720)
+    assert result.is_calibrated is True
+    assert result.stump_left_x < result.stump_right_x
+    assert result.crease_y > result.popping_y
+    assert result.pixels_per_metre_x > 0
 
 
-def test_calibration_serialization(synthetic_homography_points):
-    image_pts, pitch_pts = synthetic_homography_points
-    calibrator = PitchCalibrator()
-    calib = calibrator.calibrate(image_pts, pitch_pts, image_size=(1280, 720))
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        json_path = Path(tmpdir) / "calibration.json"
-        saved_path = PitchCalibrator.save_calibration(calib, json_path)
-
-        assert saved_path.exists()
-        loaded_calib = PitchCalibrator.load_calibration(json_path)
-
-        assert loaded_calib.camera_id == calib.camera_id
-        assert loaded_calib.reprojection_error_px == calib.reprojection_error_px
-        assert loaded_calib.homography_matrix == calib.homography_matrix
+def test_manual_calibration_stump_width():
+    cal = AutoCalibrator()
+    points = CalibrationPoints(
+        batter_crease_left  = (500.0, 600.0),
+        batter_crease_right = (780.0, 600.0),
+        off_stump_base      = (700.0, 580.0),
+        leg_stump_base      = (580.0, 580.0),
+    )
+    result = cal.calibrate_from_points(points)
+    # stump width should be ~120 pixels — real width 22.86cm → ~524 px/m
+    assert 400 < result.pixels_per_metre_x < 700
 
 
-def test_insufficient_points_error():
-    calibrator = PitchCalibrator(min_points=4)
-    with pytest.raises(ValueError, match="At least 4 point correspondences required"):
-        calibrator.calibrate(
-            image_points=[Point2D(x=0, y=0), Point2D(x=1, y=1)],
-            pitch_points=[Point2D(x=0, y=0), Point2D(x=1, y=1)],
-            image_size=(1280, 720)
-        )
-
-    with pytest.raises(ValueError, match="Number of image points and pitch points must match"):
-        calibrator.calibrate(
-            image_points=[Point2D(x=0, y=0)] * 4,
-            pitch_points=[Point2D(x=0, y=0)] * 5,
-            image_size=(1280, 720)
-        )
+def test_auto_calibration_synthetic_frame():
+    cal   = AutoCalibrator()
+    frame = np.full((720, 1280, 3), (34, 139, 34), dtype=np.uint8)
+    # Draw synthetic crease lines
+    import cv2
+    cv2.line(frame, (400, 520), (880, 520), (255,255,255), 4)
+    cv2.line(frame, (400, 280), (880, 280), (255,255,255), 4)
+    result = cal.auto_calibrate_from_frame(frame)
+    # May or may not find lines depending on Hough — should not crash
+    assert isinstance(result, CalibrationResult)
 
 
-def test_high_reprojection_error(synthetic_homography_points):
-    image_pts, pitch_pts = synthetic_homography_points
-    # Add a 5th point with artificial distortion/noise in image space
-    image_pts_5 = image_pts + [Point2D(x=640.0, y=600.0)]
-    pitch_pts_5 = pitch_pts + [Point2D(x=2.5, y=10.0)]  # Perturbed coordinate
+def test_get_pitch_geometry():
+    cal = AutoCalibrator()
+    points = CalibrationPoints(
+        batter_crease_left  = (560.0, 520.0),
+        batter_crease_right = (720.0, 520.0),
+        off_stump_base      = (672.0, 510.0),
+        leg_stump_base      = (608.0, 510.0),
+    )
+    cal.calibrate_from_points(points)
+    geom = cal.get_pitch_geometry()
+    assert "stump_left_x" in geom
+    assert "stump_right_x" in geom
+    assert "crease_y" in geom
+    assert "popping_y" in geom
 
-    calibrator = PitchCalibrator(max_reprojection_error_px=0.1)
-    calib = calibrator.calibrate(image_pts_5, pitch_pts_5, image_size=(1280, 720))
 
-    assert calib.is_valid is False
-    assert "exceeds limit" in calib.validation_message
+def test_calibration_save_and_load(tmp_path):
+    cal = AutoCalibrator()
+    points = CalibrationPoints(
+        batter_crease_left  = (560.0, 520.0),
+        batter_crease_right = (720.0, 520.0),
+        off_stump_base      = (672.0, 510.0),
+        leg_stump_base      = (608.0, 510.0),
+    )
+    cal.calibrate_from_points(points)
+    path = str(tmp_path / "calibration.json")
+    cal.save(path)
+
+    cal2 = AutoCalibrator()
+    result = cal2.load(path)
+    assert result.is_calibrated is True
+    assert result.stump_left_x == cal.result.stump_left_x
 
 
-def test_point2d_methods():
-    pt = Point2D(x=12.5, y=34.8)
-    assert pt.to_tuple() == (12.5, 34.8)
-    np.testing.assert_array_equal(pt.to_array(), np.array([12.5, 34.8]))
+# ── API Tests ──────────────────────────────────────────────────────────────
+
+def test_api_manual_calibration():
+    res = client.post("/api/v1/calibration/manual",
+        params={
+            "batter_crease_left_x": 560, "batter_crease_left_y": 520,
+            "batter_crease_right_x": 720, "batter_crease_right_y": 520,
+            "off_stump_x": 672, "off_stump_y": 510,
+            "leg_stump_x": 608, "leg_stump_y": 510,
+        }
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "ok"
+    assert data["calibration"]["is_calibrated"] is True
+
+
+def test_api_get_current_calibration():
+    res = client.get("/api/v1/calibration/current")
+    assert res.status_code == 200
+    data = res.json()
+    assert "calibration" in data
+    assert "pitch_geometry" in data
+
+
+def test_api_reset_calibration():
+    res = client.post("/api/v1/calibration/reset")
+    assert res.status_code == 200
+    assert res.json()["status"] == "reset"
