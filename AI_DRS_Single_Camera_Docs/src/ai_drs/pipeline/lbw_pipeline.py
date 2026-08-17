@@ -244,12 +244,44 @@ class LiveLBWPipeline:
             cv2.circle(img, (bx, by), 16, (0, 255, 255), 2)
             cv2.circle(img, (bx, by), 4,  (0, 255, 255), -1)
 
-        # --- Stump lines ---
-        sl = int(PITCH_GEOMETRY["stump_left_x"])
-        sr = int(PITCH_GEOMETRY["stump_right_x"])
-        wt = int(PITCH_GEOMETRY["wicket_top_y"])
-        wb = int(PITCH_GEOMETRY["wicket_bottom_y"])
-        cv2.rectangle(img, (sl, wt), (sr, wb), (255, 255, 0), 2)
+        # --- Two-Wicket Pitch Scanner Overlay ---
+        # Wicket A (Striker's End) — Bottom of pitch
+        wa_cx, wa_cy = 960, 920
+        # Wicket B (Bowler's End) — Top of pitch
+        wb_cx, wb_cy = 960, 240
+
+        # Scale coordinates relative to frame dimensions (w, h)
+        wa_x = int(wa_cx * (w / 1920.0))
+        wa_y = int(wa_cy * (h / 1080.0))
+        wb_x = int(wb_cx * (w / 1920.0))
+        wb_y = int(wb_cy * (h / 1080.0))
+
+        # 1. Primary Pitch Axis Centerline (Yellow line connecting Wicket B to Wicket A)
+        cv2.line(img, (wb_x, wb_y), (wa_x, wa_y), (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.circle(img, (wa_x, wa_y), 6, (0, 229, 160), -1) # Wicket A Center Dot
+        cv2.circle(img, (wb_x, wb_y), 6, (0, 229, 160), -1) # Wicket B Center Dot
+
+        # 2. Draw Wicket A (Striker's End 3 Stumps + Bails)
+        stump_w = int(24 * (w / 1920.0))
+        stump_h = int(65 * (h / 1080.0))
+        for off in [-stump_w, 0, stump_w]:
+            cv2.line(img, (wa_x + off, wa_y), (wa_x + off, wa_y - stump_h), (0, 255, 255), 3)
+        cv2.line(img, (wa_x - stump_w - 4, wa_y - stump_h), (wa_x + stump_w + 4, wa_y - stump_h), (0, 229, 160), 2)
+        cv2.putText(img, "WICKET A (Striker)", (wa_x - 70, wa_y + 22), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 229, 160), 1)
+
+        # 3. Draw Wicket B (Bowler's End 3 Stumps + Bails)
+        sb_w = int(14 * (w / 1920.0))
+        sb_h = int(35 * (h / 1080.0))
+        for off in [-sb_w, 0, sb_w]:
+            cv2.line(img, (wb_x + off, wb_y), (wb_x + off, wb_y - sb_h), (0, 255, 255), 2)
+        cv2.line(img, (wb_x - sb_w - 2, wb_y - sb_h), (wb_x + sb_w + 2, wb_y - sb_h), (0, 229, 160), 2)
+        cv2.putText(img, "WICKET B (Bowler)", (wb_x - 65, wb_y - sb_h - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 229, 160), 1)
+
+        # 4. Popping Crease Lines
+        crease_wa_w = int(180 * (w / 1920.0))
+        crease_wb_w = int(90 * (w / 1920.0))
+        cv2.line(img, (wa_x - crease_wa_w, wa_y - 25), (wa_x + crease_wa_w, wa_y - 25), (255, 255, 0), 1)
+        cv2.line(img, (wb_x - crease_wb_w, wb_y + 15), (wb_x + crease_wb_w, wb_y + 15), (255, 255, 0), 1)
 
         # --- Top HUD bar ---
         cv2.rectangle(img, (0, 0), (w, 52), (0, 0, 0), -1)
@@ -265,8 +297,9 @@ class LiveLBWPipeline:
         cv2.putText(img, f"Pitch: {pitching}  Impact: {impact}  Wicket: {wicket}",
                     (230, 42), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (180,240,180), 1)
 
-        # Frame counter
-        cv2.putText(img, f"Frame {self._frame_count}", (w - 160, 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (120,120,120), 1)
+        # Two-Wicket Scanner Badge (Top Right)
+        cv2.rectangle(img, (w - 280, 8), (w - 10, 44), (20, 40, 30), -1)
+        cv2.rectangle(img, (w - 280, 8), (w - 10, 44), (0, 229, 160), 1)
+        cv2.putText(img, "2-WICKET SCANNER: LOCKED", (w - 270, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 229, 160), 1)
 
         return img
