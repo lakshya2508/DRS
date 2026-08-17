@@ -58,6 +58,7 @@ from ai_drs.api.analytics_router import analytics_router
 from ai_drs.api.dataset_router import dataset_router
 from ai_drs.api.hardware_router import hardware_router
 from ai_drs.api.report_router import report_router
+from ai_drs.api.job_router import job_router
 
 app.include_router(minimal_drs_router)
 app.include_router(real_model_router)
@@ -68,6 +69,8 @@ app.include_router(analytics_router)
 app.include_router(dataset_router)
 app.include_router(hardware_router)
 app.include_router(report_router)
+app.include_router(job_router)
+
 
 app.include_router(match_router)
 app.include_router(tournament_router)
