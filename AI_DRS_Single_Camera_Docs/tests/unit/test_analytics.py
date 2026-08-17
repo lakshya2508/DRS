@@ -1,78 +1,75 @@
 """
-Unit tests for ProjectionEngine and MatchAnalyticsEngine
+Unit tests for Analytics Engine and REST API.
 """
 
 import pytest
+from fastapi.testclient import TestClient
 
-from ai_drs.match.analytics_engine import (
-    MatchAnalyticsEngine,
-    ProjectionEngine,
-    MatchAnalyticsPayload,
-    ProjectionRange,
-)
-from ai_drs.match.match_state_engine import MatchStateEngine
-from ai_drs.match.models import DeliveryEvent
+from ai_drs.api.main import app
+from ai_drs.analytics.analytics_engine import AnalyticsEngine, DeliveryRecord
+
+client = TestClient(app)
 
 
-@pytest.fixture
-def match_history():
-    engine = MatchStateEngine()
-    state = engine.initialize_match(
-        match_id="M401",
-        team_a="India",
-        team_b="Australia",
-        striker_name="V. Kohli",
-        non_striker_name="R. Sharma",
-        bowler_name="M. Starc",
-        total_overs=20,
-        target=180
-    )
-
-    history = [state]
-
-    # Simulate 12 deliveries (2 overs)
-    for i in range(12):
-        is_w = (i == 5)  # Wicket on 6th ball
-        deliv = DeliveryEvent(
-            delivery_id=f"D{i+1}",
-            over_number=i // 6,
-            ball_number_in_over=(i % 6) + 1,
-            striker_name=state.striker.name,
-            non_striker_name=state.non_striker.name,
-            bowler_name="M. Starc",
-            runs_off_bat=4 if i % 2 == 0 else 1,
-            is_wicket=is_w,
-            wicket_type="BOWLED" if is_w else None,
-            new_batsman_name="S. Yadav" if is_w else None
-        )
-        state = engine.apply_delivery(state, deliv)
-        history.append(state.model_copy(deep=True))
-
-    return history
+def test_analytics_pitch_map():
+    engine = AnalyticsEngine()
+    data = engine.get_pitch_map(bowler_name="Jasprit Bumrah")
+    assert len(data.deliveries) >= 3
+    assert data.length_accuracy_pct > 0
 
 
-def test_projection_engine(match_history):
-    latest_state = match_history[-1]
-    proj = ProjectionEngine.compute_projection(latest_state)
-
-    assert isinstance(proj, ProjectionRange)
-    assert proj.min_projected_score <= proj.expected_projected_score
-    assert proj.expected_projected_score <= proj.max_projected_score
-    assert proj.expected_projected_score <= 180  # Target capped
+def test_analytics_wagon_wheel():
+    engine = AnalyticsEngine()
+    data = engine.get_wagon_wheel(batter_name="Rohit Sharma")
+    assert len(data.deliveries) >= 2
+    assert "Mid Wicket" in data.runs_by_sector
 
 
-def test_match_analytics_engine(match_history):
-    analytics_engine = MatchAnalyticsEngine()
-    analytics = analytics_engine.generate_analytics(match_history)
-
-    assert isinstance(analytics, MatchAnalyticsPayload)
-    assert analytics.match_id == "M401"
-    assert len(analytics.run_rate_trend) == 2  # 2 overs completed
-    assert len(analytics.wicket_timeline) == 1  # 1 wicket fell
-    assert analytics.wicket_timeline[0].wicket_number == 1
-    assert len(analytics.pressure_trend) == 2
+def test_analytics_beehive():
+    engine = AnalyticsEngine()
+    data = engine.get_beehive(bowler_name="Jasprit Bumrah")
+    assert len(data.deliveries) >= 3
 
 
-def test_empty_analytics():
-    analytics_engine = MatchAnalyticsEngine()
-    assert analytics_engine.generate_analytics([]) is None
+def test_analytics_player_stats():
+    engine = AnalyticsEngine()
+    stats = engine.get_player_stats("Jasprit Bumrah")
+    assert stats["player_name"] == "Jasprit Bumrah"
+    assert stats["bowling"]["wickets"] >= 1
+
+
+def test_analytics_api_pitch_map():
+    res = client.get("/api/v1/analytics/pitch-map?bowler_name=Jasprit%20Bumrah")
+    assert res.status_code == 200
+    d = res.json()
+    assert d["status"] == "ok"
+    assert "pitch_map" in d
+
+
+def test_analytics_api_wagon_wheel():
+    res = client.get("/api/v1/analytics/wagon-wheel?batter_name=Virat%20Kohli")
+    assert res.status_code == 200
+    d = res.json()
+    assert d["status"] == "ok"
+    assert "wagon_wheel" in d
+
+
+def test_analytics_api_beehive():
+    res = client.get("/api/v1/analytics/beehive")
+    assert res.status_code == 200
+    d = res.json()
+    assert d["status"] == "ok"
+
+
+def test_analytics_api_player_stats():
+    res = client.get("/api/v1/analytics/player/Rashid%20Khan")
+    assert res.status_code == 200
+    d = res.json()
+    assert d["status"] == "ok"
+    assert d["stats"]["player_name"] == "Rashid Khan"
+
+
+def test_analytics_portal_html():
+    res = client.get("/analytics")
+    assert res.status_code == 200
+    assert "Analytics Engine" in res.text

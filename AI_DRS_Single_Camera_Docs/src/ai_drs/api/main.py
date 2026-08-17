@@ -54,12 +54,14 @@ from ai_drs.api.real_model_router import real_model_router
 from ai_drs.api.live_match_router import live_match_router
 from ai_drs.api.live_pipeline_router import live_pipeline_router
 from ai_drs.api.calibration_router import calibration_router
+from ai_drs.api.analytics_router import analytics_router
 
 app.include_router(minimal_drs_router)
 app.include_router(real_model_router)
 app.include_router(live_match_router)
 app.include_router(live_pipeline_router)
 app.include_router(calibration_router)
+app.include_router(analytics_router)
 app.include_router(match_router)
 app.include_router(tournament_router)
 app.include_router(coach_router)
@@ -80,6 +82,13 @@ def homepage():
     """AI DRS platform homepage — fulltrack.ai-style marketing site."""
     path = Path(__file__).parent.parent / "static" / "index.html"
     return HTMLResponse(content=path.read_text(encoding="utf-8"))
+
+
+@app.get("/analytics", response_class=HTMLResponse, tags=["Live Dashboard"])
+def analytics_portal():
+    """Serves the Fulltrack-style Analytics Engine & Pitch Maps UI."""
+    analytics_path = Path(__file__).parent.parent / "static" / "analytics.html"
+    return HTMLResponse(content=analytics_path.read_text(encoding="utf-8"))
 
 
 @app.get("/live", response_class=HTMLResponse, tags=["Live Dashboard"])
