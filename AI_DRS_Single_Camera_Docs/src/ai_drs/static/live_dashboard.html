@@ -256,6 +256,20 @@
       </div>
     </div>
 
+    <!-- Two-Wicket Pitch Scanner HUD -->
+    <div class="r-section" style="background:var(--panel); border:1px solid var(--border-glow); border-radius:10px; margin:12px 16px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="r-title" style="margin:0; font-size:0.78rem; color:var(--accent);">🎯 TWO-WICKET PITCH SCANNER</div>
+        <span id="scanner-badge" class="badge badge-connected" style="font-size:0.65rem;">CALIBRATED 96%</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--sub); display:flex; flex-direction:column; gap:6px; background:rgba(0,0,0,0.3); padding:10px; border-radius:6px;">
+        <div>📌 <b>Wicket A (Striker)</b>: <span id="w-a-coords" style="color:var(--accent);">[960, 920] px</span></div>
+        <div>📌 <b>Wicket B (Bowler)</b>: <span id="w-b-coords" style="color:var(--accent);">[960, 240] px</span></div>
+        <div>📏 <b>Pitch Axis Vector</b>: <span id="w-axis-len" style="color:#fff;">700.0 px (90.0°)</span></div>
+      </div>
+      <button onclick="updatePitchScannerUI()" style="margin-top:10px; width:100%; padding:7px; background:rgba(0,229,160,0.12); border:1px solid var(--border-glow); color:var(--accent); font-size:0.75rem; font-weight:700; border-radius:6px; cursor:pointer;">🔄 SCAN & LOCK BOTH WICKETS</button>
+    </div>
+
     <!-- Voice callout -->
     <div class="r-section">
       <div class="r-title">Third Umpire Voice</div>
@@ -462,8 +476,23 @@ async function resetDelivery() {
   }
 }
 
+async function updatePitchScannerUI() {
+  try {
+    const r = await fetch(`${API}/two-wicket-scanner/status`);
+    const d = await r.json();
+    if (d.wicket_a && d.wicket_b) {
+      document.getElementById('w-a-coords').textContent = `[${d.wicket_a.center_pixel[0]}, ${d.wicket_a.center_pixel[1]}] px`;
+      document.getElementById('w-b-coords').textContent = `[${d.wicket_b.center_pixel[0]}, ${d.wicket_b.center_pixel[1]}] px`;
+      document.getElementById('w-axis-len').textContent = `${d.pitch_axis_length_pixels} px (${d.pitch_axis_angle_deg}°)`;
+      document.getElementById('scanner-badge').textContent = `CALIBRATED ${Math.round(d.confidence_score*100)}%`;
+      document.getElementById('scanner-badge').className = 'badge badge-connected';
+    }
+  } catch(e) {}
+}
+
 // Boot
 connectWS();
+updatePitchScannerUI();
 </script>
 </body>
 </html>

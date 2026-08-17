@@ -72,9 +72,16 @@ class LiveCameraProcessor:
         if self.source == CameraSource.SYNTHETIC:
             logger.info("Starting synthetic frame generator (no physical camera needed).")
         else:
-            path = 0 if self.source == CameraSource.WEBCAM else self.source_path
+            if self.source == CameraSource.WEBCAM:
+                try:
+                    path = int(self.source_path)
+                except ValueError:
+                    path = 0
+            else:
+                path = self.source_path
+
             self._cap = cv2.VideoCapture(path)
-            if not self._cap.isOpened():
+            if not self._cap or not self._cap.isOpened():
                 logger.warning(f"Could not open camera source '{path}'. Falling back to synthetic mode.")
                 self.source = CameraSource.SYNTHETIC
                 self._cap = None
