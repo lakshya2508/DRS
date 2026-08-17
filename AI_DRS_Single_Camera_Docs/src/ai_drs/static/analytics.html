@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI DRS — Performance Analytics & Pitch Maps</title>
+<title>AI DRS — Performance Analytics Engine & Pitch Maps</title>
+<link rel="stylesheet" href="/static/css/global_theme.css"/>
+<script src="/static/js/global_nav.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&display=swap');
 
   :root {
     --bg: #06090f; --panel: #0b1120; --panel2: #0f1929; --border: rgba(255,255,255,.08);
-    --accent: #00e5a0; --accent2: #0099ff; --accent3: #ff6b35;
+    --accent: #00e5a0; --accent2: #00e5a0; --accent3: #ff6b35;
     --text: #e8f4ff; --sub: #6b8aab;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -68,16 +70,7 @@
 </head>
 <body>
 
-<header>
-  <a class="logo" href="/">AI<span>DRS</span> Analytics</a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/setup">Match Setup</a>
-    <a href="/live">Live Operator</a>
-    <a href="/analytics" class="active">Analytics Engine</a>
-    <a href="/scoreboard">Scoreboard</a>
-  </div>
-</header>
+<!-- Header rendered dynamically by global_nav.js -->
 
 <div class="container">
 
@@ -268,7 +261,7 @@ function drawBeehive(deliveries) {
 
     ctx.beginPath();
     ctx.arc(px, py, 7, 0, Math.PI * 2);
-    ctx.fillStyle = d.is_wicket ? '#ff1744' : '#0099ff';
+    ctx.fillStyle = d.is_wicket ? '#ff1744' : '#00e5a0';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.stroke();
@@ -284,7 +277,7 @@ function drawWagonWheel(deliveries) {
   ctx.clearRect(0, 0, w, h);
 
   // Oval Boundary
-  ctx.strokeStyle = 'rgba(0, 153, 255, 0.4)';
+  ctx.strokeStyle = 'rgba(0, 229, 160, 0.4)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);

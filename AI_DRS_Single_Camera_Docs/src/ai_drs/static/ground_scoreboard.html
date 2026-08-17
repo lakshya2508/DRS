@@ -1,9 +1,5 @@
-"""
-Ground Scoreboard Display — Full-screen HTML for stadium screens, projectors,
-and second monitors at the ground. Auto-refreshes via WebSocket.
-"""
-
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -28,7 +24,7 @@ and second monitors at the ground. Auto-refreshes via WebSocket.
     display:flex;
     align-items:stretch;
     background:linear-gradient(135deg,#0a0f1a 0%,#0d1a2e 100%);
-    border-bottom:3px solid #00c8ff;
+    border-bottom:3px solid #00e5a0;
     flex:0 0 auto;
   }
 
@@ -41,7 +37,7 @@ and second monitors at the ground. Auto-refreshes via WebSocket.
     padding:18px 10px;
     border-right:1px solid rgba(0,200,255,.15);
   }
-  .team-name  { font-size:clamp(1rem,3vw,2rem); color:#00c8ff; letter-spacing:.08em; }
+  .team-name  { font-size:clamp(1rem,3vw,2rem); color:#00e5a0; letter-spacing:.08em; }
   .team-score { font-size:clamp(2rem,8vw,5.5rem); font-weight:900; line-height:1; }
   .team-overs { font-size:clamp(.6rem,1.5vw,.9rem); color:#5a7a9a; margin-top:4px; }
 
@@ -129,7 +125,7 @@ and second monitors at the ground. Auto-refreshes via WebSocket.
   /* ── TICKER ─────────────────────────────────── */
   #ticker {
     flex:0 0 36px;
-    background:#00c8ff;
+    background:#00e5a0;
     color:#000;
     display:flex;
     align-items:center;

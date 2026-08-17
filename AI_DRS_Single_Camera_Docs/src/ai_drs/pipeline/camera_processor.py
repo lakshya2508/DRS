@@ -52,6 +52,7 @@ class LiveCameraProcessor:
         self.target_fps  = target_fps
         self.on_frame    = on_frame
 
+        self._lock = threading.Lock()
         self._cap: Optional[cv2.VideoCapture] = None
         self._running    = False
         self._thread: Optional[threading.Thread] = None
@@ -94,7 +95,8 @@ class LiveCameraProcessor:
         logger.info("LiveCameraProcessor stopped.")
 
     def get_last_frame(self) -> Optional[CameraFrame]:
-        return self._last_frame
+        with self._lock:
+            return self._last_frame
 
     @property
     def is_running(self) -> bool:
@@ -125,7 +127,8 @@ class LiveCameraProcessor:
                 timestamp = time.time(),
                 source    = self.source.value,
             )
-            self._last_frame = cam_frame
+            with self._lock:
+                self._last_frame = cam_frame
 
             if self.on_frame:
                 try:

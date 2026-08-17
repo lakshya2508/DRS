@@ -6,7 +6,9 @@
 <title>AI DRS — Professional Cricket Analytics Platform</title>
 <meta name="description" content="AI-powered cricket analytics for every player. Ball tracking, pitch maps, wagon wheels, DRS decisions — all from a single camera."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/global_theme.css"/>
+<script src="/static/js/global_nav.js"></script>
 <style>
 /* ── RESET & BASE ───────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -16,7 +18,7 @@
   --panel2:#0f1929;
   --border:rgba(255,255,255,.07);
   --accent:#00e5a0;
-  --accent2:#0099ff;
+  --accent2:#00e5a0;
   --accent3:#ff6b35;
   --text:#e8f4ff;
   --sub:#6b8aab;
@@ -214,24 +216,7 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:60px 5
 </head>
 <body>
 
-<!-- ── NAV ── -->
-<nav>
-  <a class="logo" href="/">AI<span>DRS</span></a>
-  <ul class="nav-links">
-    <li><a href="#how">How It Works</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#analytics">Analytics</a></li>
-    <li><a href="#drs">DRS</a></li>
-    <li><a href="#pricing">Pricing</a></li>
-  </ul>
-  <div class="nav-cta">
-    <a class="btn btn-ghost" href="/live">Live Demo</a>
-    <a class="btn btn-primary" href="/setup">Get Started</a>
-  </div>
-  <div class="hamburger" onclick="toggleMenu()">
-    <span></span><span></span><span></span>
-  </div>
-</nav>
+<!-- Unified Header rendered dynamically by global_nav.js -->
 
 <!-- ── HERO ── -->
 <section class="hero" id="home">

@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AI DRS — Live Match Operator Dashboard</title>
+<link rel="stylesheet" href="/static/css/global_theme.css"/>
+<script src="/static/js/global_nav.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap');
 
@@ -11,7 +13,7 @@
     --bg:        #060a0f;
     --panel:     #0d1520;
     --border:    #1a2d44;
-    --accent:    #00c8ff;
+    --accent:    #00e5a0;
     --green:     #00e676;
     --red:       #ff1744;
     --amber:     #ffa726;
@@ -151,7 +153,7 @@
   button { cursor:pointer; border:none; border-radius:7px; padding:9px 16px;
            font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.88rem;
            letter-spacing:.06em; transition: all .2s; }
-  #btn-start { background:#00c8ff; color:#000; }
+  #btn-start { background:#00e5a0; color:#000; }
   #btn-start:hover { background:#33d4ff; box-shadow:0 0 14px rgba(0,200,255,.4); }
   #btn-stop  { background:#ff1744; color:#fff; }
   #btn-stop:hover  { background:#ff4569; }
@@ -180,12 +182,17 @@
 </head>
 <body>
 
-<!-- ── HEADER ── -->
-<header>
-  <h1>&#9651; AI DRS — LIVE MATCH</h1>
-  <span id="live-badge" class="badge badge-idle">&#11044; IDLE</span>
-  <span id="clock">--:--:--</span>
-</header>
+<!-- ── SUB-HUD HEADER ── -->
+<div style="background:var(--panel2); border-bottom:1px solid var(--border); padding:10px 30px; display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex; align-items:center; gap:16px;">
+    <h2 style="font-family:'Orbitron',sans-serif; font-size:1.1rem; color:var(--accent);">AI DRS — LIVE MATCH BROADCAST STATION</h2>
+    <span id="pipeline-status" style="font-size:0.75rem; color:var(--sub); text-transform:uppercase; font-weight:700;">Pipeline: IDLE</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <span id="live-badge" class="badge badge-idle">● IDLE</span>
+    <span id="clock" style="font-family:'Orbitron',sans-serif; font-size:0.85rem; color:var(--accent2);">--:--:--</span>
+  </div>
+</div>
 
 <main>
 
@@ -260,16 +267,22 @@
     <div id="drs-log"></div>
 
     <!-- Controls -->
-    <div id="controls">
-      <select id="src-select">
-        <option value="SYNTHETIC">Synthetic (Test)</option>
-        <option value="WEBCAM">Webcam (USB)</option>
-        <option value="VIDEO">Video File</option>
-        <option value="RTSP">RTSP Stream</option>
+    <div id="controls" style="display:flex; flex-direction:column; gap:10px; padding:16px;">
+      <label style="font-size:.72rem; color:var(--sub); text-transform:uppercase; font-weight:700;">LIVE CAMERA INPUT SOURCE</label>
+      <select id="src-select" onchange="toggleCamPathInput()" style="width:100%; padding:10px; border-radius:6px;">
+        <option value="WEBCAM_0">📹 Live Webcam (Device 0 — Built-in / USB)</option>
+        <option value="WEBCAM_1">🎥 Live Webcam (Device 1 — External USB Cam)</option>
+        <option value="WEBCAM_2">📷 Live Webcam (Device 2 — Capture Card)</option>
+        <option value="RTSP">📡 RTSP IP Broadcast Feed</option>
+        <option value="DATASET">📁 Dataset MP4 Stream (archive 1)</option>
+        <option value="SYNTHETIC">⚡ Synthetic AI Demo Feed</option>
       </select>
-      <button id="btn-start" onclick="startPipeline()">&#9654; START</button>
-      <button id="btn-stop"  onclick="stopPipeline()">&#9646;&#9646; STOP</button>
-      <button id="btn-reset" onclick="resetDelivery()">&#8635; RESET DELIVERY</button>
+      <input type="text" id="cam-path-input" placeholder="rtsp://192.168.1.100:554/live" style="display:none; width:100%; padding:8px 12px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; color:#fff; font-size:0.8rem;"/>
+      <div style="display:flex; gap:8px;">
+        <button id="btn-start" onclick="startPipeline()" style="flex:1;">▶ CONNECT LIVE CAMERA</button>
+        <button id="btn-stop" onclick="stopPipeline()">⏸ STOP</button>
+      </div>
+      <button id="btn-reset" onclick="resetDelivery()">🔄 RESET DELIVERY</button>
     </div>
   </div>
 </main>
@@ -395,14 +408,43 @@ function addLogEntry(d) {
   if (log.children.length > 40) log.removeChild(log.lastChild);
 }
 
+function toggleCamPathInput() {
+  const src = document.getElementById('src-select').value;
+  const input = document.getElementById('cam-path-input');
+  if (src === 'RTSP' || src === 'DATASET') {
+    input.style.display = 'block';
+    if (src === 'RTSP') input.placeholder = 'rtsp://192.168.1.100:554/live';
+    if (src === 'DATASET') input.placeholder = 'C:/Users/Hello-pc/Downloads/archive (1)/Dataset/train/LBW/lbw1.mp4';
+  } else {
+    input.style.display = 'none';
+  }
+}
+
 // ── Pipeline controls ──────────────────────────────────────────────────────
 async function startPipeline() {
-  const src = document.getElementById('src-select').value;
-  const r = await fetch(`${API}/pipeline/start?source=${src}&source_path=0`, { method:'POST' });
+  const rawSrc = document.getElementById('src-select').value;
+  let source = 'WEBCAM';
+  let sourcePath = '0';
+
+  if (rawSrc.startsWith('WEBCAM_')) {
+    source = 'WEBCAM';
+    sourcePath = rawSrc.split('_')[1];
+  } else if (rawSrc === 'RTSP') {
+    source = 'RTSP';
+    sourcePath = document.getElementById('cam-path-input').value || 'rtsp://127.0.0.1:554/live';
+  } else if (rawSrc === 'DATASET') {
+    source = 'VIDEO';
+    sourcePath = document.getElementById('cam-path-input').value || 'C:/Users/Hello-pc/Downloads/archive (1)/Dataset/train/LBW/lbw1.mp4';
+  } else {
+    source = 'SYNTHETIC';
+    sourcePath = '0';
+  }
+
+  const r = await fetch(`${API}/pipeline/start?source=${source}&source_path=${encodeURIComponent(sourcePath)}`, { method:'POST' });
   const d = await r.json();
-  document.getElementById('pipeline-status').textContent = `Pipeline: ${d.status.toUpperCase()}`;
+  document.getElementById('pipeline-status').textContent = `Pipeline: ${d.status.toUpperCase()} (${source})`;
   document.getElementById('live-badge').className = 'badge badge-live';
-  document.getElementById('live-badge').textContent = '● LIVE';
+  document.getElementById('live-badge').textContent = '● LIVE FEED CONNECTED';
 }
 
 async function stopPipeline() {

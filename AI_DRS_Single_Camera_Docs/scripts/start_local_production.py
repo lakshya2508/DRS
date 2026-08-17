@@ -30,6 +30,7 @@ def main():
     print(f"   >> All League Teams     : {BASE}/api/v1/leagues")
     print(f"   >> Pipeline Start       : POST {BASE}/pipeline/start")
     print(f"   >> Calibration          : {BASE}/api/v1/calibration/current")
+    print(f"   >> Dataset Clips & AI   : {BASE}/api/v1/dataset/clips")
     print(f"   >> WebSocket Live Feed  : ws://127.0.0.1:8000/ws/live")
     print("=" * 70)
     print()

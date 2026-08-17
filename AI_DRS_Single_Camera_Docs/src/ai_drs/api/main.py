@@ -55,6 +55,9 @@ from ai_drs.api.live_match_router import live_match_router
 from ai_drs.api.live_pipeline_router import live_pipeline_router
 from ai_drs.api.calibration_router import calibration_router
 from ai_drs.api.analytics_router import analytics_router
+from ai_drs.api.dataset_router import dataset_router
+from ai_drs.api.hardware_router import hardware_router
+from ai_drs.api.report_router import report_router
 
 app.include_router(minimal_drs_router)
 app.include_router(real_model_router)
@@ -62,6 +65,10 @@ app.include_router(live_match_router)
 app.include_router(live_pipeline_router)
 app.include_router(calibration_router)
 app.include_router(analytics_router)
+app.include_router(dataset_router)
+app.include_router(hardware_router)
+app.include_router(report_router)
+
 app.include_router(match_router)
 app.include_router(tournament_router)
 app.include_router(coach_router)
@@ -103,6 +110,8 @@ def ground_scoreboard():
     """Serves the full-screen Ground Scoreboard for stadium displays."""
     board_path = Path(__file__).parent.parent / "static" / "ground_scoreboard.html"
     return HTMLResponse(content=board_path.read_text(encoding="utf-8"))
+
+
 
 
 @app.get("/api/v1/leagues", tags=["League Database"])
