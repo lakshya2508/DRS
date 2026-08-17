@@ -138,8 +138,9 @@ class LiveLBWPipeline:
         self._frame_count += 1
         img = cam_frame.frame.copy()
 
-        # 1. Detect ball
-        result = self.model.predict_image(img, confidence_threshold=0.30)
+        # 1. Detect ball (strictly capture ONLY cricket balls)
+        is_synth = getattr(cam_frame, "source_type", "") == "SYNTHETIC" or getattr(cam_frame, "source_path", "") == "synthetic"
+        result = self.model.predict_image(img, confidence_threshold=0.30, is_synthetic=is_synth)
         ball_detections = [d for d in result.detections if d.class_label == "cricket_ball"]
 
         if ball_detections:

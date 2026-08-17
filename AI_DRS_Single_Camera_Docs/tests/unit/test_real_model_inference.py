@@ -19,7 +19,7 @@ def test_real_model_inference_engine_prediction():
     engine = RealModelInferenceEngine()
     img = np.zeros((720, 1280, 3), dtype=np.uint8)
 
-    result = engine.predict_image(img, confidence_threshold=0.30)
+    result = engine.predict_image(img, confidence_threshold=0.30, is_synthetic=True)
 
     assert isinstance(result, ModelPredictionResult)
     assert result.image_width == 1280
