@@ -37,6 +37,7 @@ class ClassifyDeliveryRequest(BaseModel):
 
 
 @two_wicket_router.get("/status", response_model=TwoWicketCalibrationState)
+@two_wicket_router.get("/two-wicket-scanner/status", response_model=TwoWicketCalibrationState)
 def get_scanner_status():
     """Returns the current 2-Wicket scanner calibration status and pitch axis parameters."""
     return two_wicket_scanner.update_calibration()

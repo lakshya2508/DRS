@@ -478,7 +478,7 @@ async function resetDelivery() {
 
 async function updatePitchScannerUI() {
   try {
-    const r = await fetch(`${API}/two-wicket-scanner/status`);
+    const r = await fetch('/api/v1/two-wicket-scanner/status');
     const d = await r.json();
     if (d.wicket_a && d.wicket_b) {
       document.getElementById('w-a-coords').textContent = `[${d.wicket_a.center_pixel[0]}, ${d.wicket_a.center_pixel[1]}] px`;
